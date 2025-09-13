@@ -1,0 +1,36 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="200dp"
+    android:height="200dp"
+    android:viewportWidth="200"
+    android:viewportHeight="200">
+    
+    <!-- Fondo -->
+    <path
+        android:fillColor="#E8F5E8"
+        android:pathData="M0,0h200v200h-200z"/>
+    
+    <!-- Pesas -->
+    <path
+        android:fillColor="#388E3C"
+        android:pathData="M30,85h20v30h-20z"/>
+    <path
+        android:fillColor="#388E3C"
+        android:pathData="M150,85h20v30h-20z"/>
+    
+    <!-- Barra -->
+    <path
+        android:fillColor="#2E7D32"
+        android:pathData="M50,95h100v10h-100z"/>
+    
+    <!-- Círculos decorativos usando path -->
+    <path
+        android:fillColor="#4CAF50"
+        android:pathData="M100,130m-8,0a8,8 0,1 1,16 0a8,8 0,1 1,-16 0"/>
+    <path
+        android:fillColor="#4CAF50"
+        android:pathData="M85,145m-6,0a6,6 0,1 1,12 0a6,6 0,1 1,-12 0"/>
+    <path
+        android:fillColor="#4CAF50"
+        android:pathData="M115,145m-6,0a6,6 0,1 1,12 0a6,6 0,1 1,-12 0"/>
+        
+</vector>

@@ -7,6 +7,8 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.Assignment
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -19,6 +21,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.ejercicio2.data.*
 import com.example.ejercicio2.ui.theme.*
+import com.example.ejercicio2.viewmodel.TaskManagerViewModel
 import java.text.SimpleDateFormat
 import java.util.*
 
@@ -50,7 +53,7 @@ fun TaskListScreen(
         ) {
             IconButton(onClick = onNavigateBack) {
                 Icon(
-                    Icons.Default.ArrowBack,
+                    Icons.AutoMirrored.Filled.ArrowBack,
                     contentDescription = "Volver",
                     tint = TextPrimary
                 )
@@ -93,8 +96,8 @@ fun TaskListScreen(
                 items(filteredTasks) { task ->
                     TaskItem(
                         task = task,
-                        onComplete = { viewModel.completeTask(it) },
-                        onDelete = { viewModel.deleteTask(it) }
+                        onComplete = { viewModel.completeTask(task) },
+                        onDelete = { viewModel.deleteTask(task.id) }
                     )
                 }
             }
@@ -133,8 +136,8 @@ private fun FilterChips(
 @Composable
 private fun TaskItem(
     task: Task,
-    onComplete: (String) -> Unit,
-    onDelete: (String) -> Unit
+    onComplete: () -> Unit,
+    onDelete: () -> Unit
 ) {
     var showDeleteDialog by remember { mutableStateOf(false) }
     
@@ -223,7 +226,7 @@ private fun TaskItem(
                                 modifier = Modifier.size(16.dp)
                             )
                             Text(
-                                text = "${task.experiencePoints} XP",
+                                text = "${task.xpReward} XP",
                                 fontSize = 12.sp,
                                 color = TextSecondary
                             )
@@ -270,7 +273,7 @@ private fun TaskItem(
                 Column {
                     if (task.status == TaskStatus.PENDING) {
                         IconButton(
-                            onClick = { onComplete(task.id) }
+                            onClick = onComplete
                         ) {
                             Icon(
                                 Icons.Default.CheckCircle,
@@ -303,7 +306,7 @@ private fun TaskItem(
             confirmButton = {
                 TextButton(
                     onClick = {
-                        onDelete(task.id)
+                        onDelete()
                         showDeleteDialog = false
                     }
                 ) {
@@ -327,13 +330,9 @@ private fun EmptyTasksMessage(filter: TaskFilter) {
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Icon(
-            when (filter) {
-                TaskFilter.ALL -> Icons.Default.Assignment
-                TaskFilter.PENDING -> Icons.Default.PendingActions
-                TaskFilter.COMPLETED -> Icons.Default.CheckCircle
-            },
-            contentDescription = null,
-            tint = TextSecondary,
+            imageVector = Icons.AutoMirrored.Filled.Assignment,
+            contentDescription = "No hay tareas",
+            tint = Color.Gray,
             modifier = Modifier.size(64.dp)
         )
         

@@ -1,0 +1,41 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="200dp"
+    android:height="200dp"
+    android:viewportWidth="200"
+    android:viewportHeight="200">
+    
+    <!-- Fondo -->
+    <path
+        android:fillColor="#FFF3E0"
+        android:pathData="M0,0h200v200h-200z"/>
+    
+    <!-- Plato usando path circular -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:strokeColor="#FF9800"
+        android:strokeWidth="3"
+        android:pathData="M100,100m-50,0a50,50 0,1 1,100 0a50,50 0,1 1,-100 0"/>
+    
+    <!-- Comida - Círculos usando path -->
+    <path
+        android:fillColor="#4CAF50"
+        android:pathData="M85,90m-12,0a12,12 0,1 1,24 0a12,12 0,1 1,-24 0"/>
+    <path
+        android:fillColor="#F44336"
+        android:pathData="M115,90m-12,0a12,12 0,1 1,24 0a12,12 0,1 1,-24 0"/>
+    <path
+        android:fillColor="#FF9800"
+        android:pathData="M100,110m-15,0a15,15 0,1 1,30 0a15,15 0,1 1,-30 0"/>
+    
+    <!-- Tenedor -->
+    <path
+        android:fillColor="#616161"
+        android:pathData="M160,70h3v60h-3z"/>
+    <path
+        android:fillColor="#616161"
+        android:pathData="M157,70h9v3h-9z"/>
+    <path
+        android:fillColor="#616161"
+        android:pathData="M157,75h9v3h-9z"/>
+        
+</vector>

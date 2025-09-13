@@ -21,6 +21,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.ejercicio2.data.*
 import com.example.ejercicio2.ui.theme.*
+import com.example.ejercicio2.viewmodel.TaskManagerViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -28,7 +29,8 @@ fun DashboardScreen(
     viewModel: TaskManagerViewModel,
     onNavigateToTasks: () -> Unit = {},
     onNavigateToProfile: () -> Unit = {},
-    onNavigateToAddTask: () -> Unit = {}
+    onNavigateToAddTask: () -> Unit = {},
+    onNavigateToReports: () -> Unit = {}
 ) {
     val userProfile = viewModel.userProfile
     val pendingTasks = viewModel.getPendingTasks()
@@ -52,7 +54,7 @@ fun DashboardScreen(
         QuickStatsSection(
             pendingCount = pendingTasks.size,
             completedCount = completedTasks.size,
-            streak = userProfile.streak
+            streak = userProfile.currentStreak
         )
         
         Spacer(modifier = Modifier.height(24.dp))
@@ -99,7 +101,7 @@ fun DashboardScreen(
             items(pendingTasks.take(3)) { task ->
                 TaskItemCompact(
                     task = task,
-                    onComplete = { viewModel.completeTask(it) }
+                    onComplete = { viewModel.completeTask(task) }
                 )
                 Spacer(modifier = Modifier.height(8.dp))
             }
@@ -124,7 +126,7 @@ fun DashboardScreen(
 
 @Composable
 private fun UserProfileHeader(
-    userProfile: UserProfile,
+    userProfile: User,
     onProfileClick: () -> Unit
 ) {
     Card(
@@ -166,24 +168,30 @@ private fun UserProfileHeader(
                 )
                 
                 Text(
-                    text = "Nivel ${userProfile.level} • ${userProfile.currentExp} XP",
+                    text = "Nivel ${userProfile.level} • ${userProfile.currentXP} XP",
                     fontSize = 14.sp,
                     color = Color.White.copy(alpha = 0.8f)
                 )
                 
                 // Barra de progreso de XP
-                LinearProgressIndicator(
-                    progress = (userProfile.currentExp % 100) / 100f,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(top = 8.dp),
-                    color = AccentYellow,
-                    trackColor = Color.White.copy(alpha = 0.3f)
-                )
+                Column(modifier = Modifier.fillMaxWidth()) {
+                    // ... (código existente)
+                    
+                    Spacer(modifier = Modifier.height(4.dp))
+                    
+                    LinearProgressIndicator(
+                        progress = { (userProfile.currentXP % 100) / 100f },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(8.dp),
+                        color = AccentYellow,
+                        trackColor = Color.White.copy(alpha = 0.3f)
+                    )
+                }
             }
             
             // Icono de estrella de streak
-            if (userProfile.streak > 0) {
+            if (userProfile.currentStreak > 0) {
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
                     Icon(
                         Icons.Default.Whatshot,
@@ -192,7 +200,7 @@ private fun UserProfileHeader(
                         modifier = Modifier.size(24.dp)
                     )
                     Text(
-                        text = "${userProfile.streak}",
+                        text = "${userProfile.currentStreak}",
                         fontSize = 12.sp,
                         color = Color.White,
                         fontWeight = FontWeight.Bold
@@ -349,7 +357,7 @@ private fun CategoryCard(
 @Composable
 private fun TaskItemCompact(
     task: Task,
-    onComplete: (String) -> Unit
+    onComplete: () -> Unit
 ) {
     Card(
         modifier = Modifier.fillMaxWidth(),
@@ -389,7 +397,7 @@ private fun TaskItemCompact(
             }
             
             IconButton(
-                onClick = { onComplete(task.id) }
+                onClick = { onComplete() }
             ) {
                 Icon(
                     Icons.Default.CheckCircle,

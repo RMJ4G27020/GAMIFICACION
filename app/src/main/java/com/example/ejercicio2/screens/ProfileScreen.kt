@@ -8,6 +8,9 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.Assignment
+import androidx.compose.material.icons.automirrored.filled.TrendingUp
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -19,6 +22,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.ejercicio2.data.*
 import com.example.ejercicio2.ui.theme.*
+import com.example.ejercicio2.viewmodel.TaskManagerViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -43,7 +47,7 @@ fun ProfileScreen(
             ) {
                 IconButton(onClick = onNavigateBack) {
                     Icon(
-                        Icons.Default.ArrowBack,
+                        Icons.AutoMirrored.Filled.ArrowBack,
                         contentDescription = "Volver",
                         tint = TextPrimary
                     )
@@ -82,7 +86,7 @@ fun ProfileScreen(
 }
 
 @Composable
-private fun ProfileCard(userProfile: UserProfile) {
+private fun ProfileCard(userProfile: User) {
     Card(
         modifier = Modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(containerColor = PrimaryBlue),
@@ -139,12 +143,12 @@ private fun ProfileCard(userProfile: UserProfile) {
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
                     Text(
-                        text = "${userProfile.currentExp} XP",
+                        text = "${userProfile.currentXP} XP",
                         fontSize = 12.sp,
                         color = Color.White.copy(alpha = 0.8f)
                     )
                     Text(
-                        text = "100 XP",
+                        text = "${userProfile.level * 100} XP",
                         fontSize = 12.sp,
                         color = Color.White.copy(alpha = 0.8f)
                     )
@@ -153,7 +157,7 @@ private fun ProfileCard(userProfile: UserProfile) {
                 Spacer(modifier = Modifier.height(4.dp))
                 
                 LinearProgressIndicator(
-                    progress = (userProfile.currentExp % 100) / 100f,
+                    progress = { (userProfile.currentXP.toFloat() / (userProfile.level * 100).toFloat()) },
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(8.dp),
@@ -171,19 +175,19 @@ private fun ProfileCard(userProfile: UserProfile) {
             ) {
                 ProfileStat(
                     icon = Icons.Default.EmojiEvents,
-                    value = "${userProfile.totalExp}",
+                    value = "${userProfile.currentXP}",
                     label = "XP Total"
                 )
                 
                 ProfileStat(
                     icon = Icons.Default.CheckCircle,
-                    value = "${userProfile.completedTasks}",
+                    value = "${userProfile.tasksCompleted}",
                     label = "Completadas"
                 )
                 
                 ProfileStat(
                     icon = Icons.Default.Whatshot,
-                    value = "${userProfile.streak}",
+                    value = "${userProfile.currentStreak}",
                     label = "Racha"
                 )
             }
@@ -252,7 +256,7 @@ private fun StatsSection(viewModel: TaskManagerViewModel) {
             StatRow(
                 label = "Tareas totales",
                 value = totalTasks.toString(),
-                icon = Icons.Default.Assignment,
+                icon = Icons.AutoMirrored.Filled.Assignment,
                 color = PrimaryBlue
             )
             
@@ -274,7 +278,7 @@ private fun StatsSection(viewModel: TaskManagerViewModel) {
                 StatRow(
                     label = "Tasa de finalización",
                     value = "${(completedTasks * 100) / totalTasks}%",
-                    icon = Icons.Default.TrendingUp,
+                    icon = Icons.AutoMirrored.Filled.TrendingUp,
                     color = SecondaryGreen
                 )
             }
@@ -321,7 +325,7 @@ private fun StatRow(
 }
 
 @Composable
-private fun AchievementsSection(userProfile: UserProfile) {
+private fun AchievementsSection(userProfile: User) {
     Card(
         modifier = Modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(containerColor = SurfaceLight),
@@ -342,32 +346,15 @@ private fun AchievementsSection(userProfile: UserProfile) {
             Spacer(modifier = Modifier.height(16.dp))
             
             if (userProfile.badges.isEmpty()) {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.Center
-                ) {
-                    Column(
-                        horizontalAlignment = Alignment.CenterHorizontally
-                    ) {
-                        Icon(
-                            Icons.Default.EmojiEvents,
-                            contentDescription = "Sin logros",
-                            tint = TextSecondary,
-                            modifier = Modifier.size(48.dp)
-                        )
-                        
-                        Spacer(modifier = Modifier.height(8.dp))
-                        
-                        Text(
-                            text = "¡Completa tareas para desbloquear logros!",
-                            fontSize = 14.sp,
-                            color = TextSecondary
-                        )
-                    }
-                }
+                Text(
+                    text = "Aún no has desbloqueado ningún logro. ¡Sigue completando tareas!",
+                    fontSize = 14.sp,
+                    color = TextSecondary
+                )
             } else {
                 LazyRow(
-                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                    contentPadding = PaddingValues(horizontal = 20.dp),
+                    horizontalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
                     items(userProfile.badges) { badge ->
                         BadgeItem(badge)
@@ -482,7 +469,7 @@ private fun CategoryProgressItem(
         Spacer(modifier = Modifier.height(4.dp))
         
         LinearProgressIndicator(
-            progress = if (total > 0) completed.toFloat() / total else 0f,
+            progress = { if (total > 0) completed.toFloat() / total else 0f },
             modifier = Modifier.fillMaxWidth(),
             color = category.color,
             trackColor = category.color.copy(alpha = 0.2f)

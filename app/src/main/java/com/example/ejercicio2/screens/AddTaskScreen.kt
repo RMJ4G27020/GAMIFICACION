@@ -7,6 +7,7 @@ import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -18,6 +19,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.ejercicio2.data.*
 import com.example.ejercicio2.ui.theme.*
+import com.example.ejercicio2.viewmodel.TaskManagerViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -28,6 +30,8 @@ fun AddTaskScreen(
     var title by remember { mutableStateOf("") }
     var description by remember { mutableStateOf("") }
     var selectedCategory by remember { mutableStateOf<TaskCategory?>(null) }
+    var selectedPriority by remember { mutableStateOf(TaskPriority.MEDIUM) }
+    var selectedDate by remember { mutableStateOf(java.time.LocalDate.now().plusDays(1)) }
     var showError by remember { mutableStateOf(false) }
 
     Column(
@@ -43,7 +47,7 @@ fun AddTaskScreen(
         ) {
             IconButton(onClick = onNavigateBack) {
                 Icon(
-                    Icons.Default.ArrowBack,
+                    Icons.AutoMirrored.Filled.ArrowBack,
                     contentDescription = "Volver",
                     tint = TextPrimary
                 )
@@ -203,7 +207,21 @@ fun AddTaskScreen(
                     if (title.isBlank() || selectedCategory == null) {
                         showError = true
                     } else {
-                        viewModel.addTask(title, description, selectedCategory!!)
+                        val newTask = Task(
+                            id = "", // Se asignará automáticamente en el ViewModel
+                            title = title,
+                            description = description,
+                            category = selectedCategory!!,
+                            priority = selectedPriority,
+                            status = TaskStatus.PENDING,
+                            dueDate = selectedDate,
+                            xpReward = when(selectedPriority) {
+                                TaskPriority.HIGH -> 60
+                                TaskPriority.MEDIUM -> 40  
+                                TaskPriority.LOW -> 20
+                            }
+                        )
+                        viewModel.addTask(newTask)
                         onNavigateBack()
                     }
                 },

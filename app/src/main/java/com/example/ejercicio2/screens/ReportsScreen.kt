@@ -5,24 +5,30 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.TrendingUp
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.ejercicio2.data.*
 import com.example.ejercicio2.ui.theme.*
+import com.example.ejercicio2.viewmodel.TaskManagerViewModel
 import java.text.SimpleDateFormat
-import java.util.*
+import java.util.Calendar
+import java.util.Date
+import java.util.Locale
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ReportsScreen(
-    viewModel: TaskManagerViewModel
+    viewModel: TaskManagerViewModel,
+    onNavigateBack: () -> Unit
 ) {
     val userProfile = viewModel.userProfile
     val completedTasks = viewModel.getCompletedTasks()
@@ -50,9 +56,9 @@ fun ReportsScreen(
             GeneralSummaryCard(
                 completedTasks = completedTasks.size,
                 pendingTasks = pendingTasks.size,
-                totalExp = userProfile.totalExp,
+                totalExp = userProfile.currentXP,
                 level = userProfile.level,
-                streak = userProfile.streak
+                streak = userProfile.currentStreak
             )
         }
         
@@ -128,7 +134,7 @@ private fun GeneralSummaryCard(
             
             Spacer(modifier = Modifier.height(16.dp))
             
-            Divider(color = Color.White.copy(alpha = 0.3f))
+            HorizontalDivider(color = Color.White.copy(alpha = 0.3f))
             
             Spacer(modifier = Modifier.height(16.dp))
             
@@ -225,7 +231,7 @@ private fun CategoryStatsCard(viewModel: TaskManagerViewModel) {
             TaskCategory.values().forEach { category ->
                 val categoryTasks = viewModel.getTasksByCategory(category)
                 val completedTasks = categoryTasks.filter { it.status == TaskStatus.COMPLETED }
-                val totalXP = completedTasks.sumOf { it.experiencePoints }
+                val totalXP = completedTasks.sumOf { it.xpReward }
                 
                 CategoryStatItem(
                     category = category,
@@ -297,10 +303,13 @@ private fun CategoryStatItem(
         Spacer(modifier = Modifier.height(8.dp))
         
         LinearProgressIndicator(
-            progress = if (total > 0) completed.toFloat() / total else 0f,
-            modifier = Modifier.fillMaxWidth(),
+            progress = { if (total > 0) completed.toFloat() / total else 0f },
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(8.dp)
+                .clip(RoundedCornerShape(4.dp)),
             color = category.color,
-            trackColor = category.color.copy(alpha = 0.2f)
+            trackColor = SurfaceLight
         )
     }
 }
@@ -388,7 +397,7 @@ private fun RecentActivityItem(task: Task) {
             )
             
             Text(
-                text = "+${task.experiencePoints}",
+                text = "+${task.xpReward}",
                 fontSize = 12.sp,
                 color = ExperienceColor,
                 fontWeight = FontWeight.Bold
@@ -398,9 +407,9 @@ private fun RecentActivityItem(task: Task) {
 }
 
 @Composable
-private fun MotivationCard(userProfile: UserProfile) {
+private fun MotivationCard(userProfile: User) {
     val nextLevelXP = (userProfile.level * 100)
-    val xpNeeded = nextLevelXP - userProfile.currentExp
+    val xpNeeded = nextLevelXP - userProfile.currentXP
     
     Card(
         modifier = Modifier.fillMaxWidth(),
@@ -436,8 +445,8 @@ private fun MotivationCard(userProfile: UserProfile) {
             
             Text(
                 text = when {
-                    userProfile.streak >= 7 -> "¡Increíble racha de ${userProfile.streak} días! Eres un verdadero campeón."
-                    userProfile.completedTasks >= 10 -> "¡${userProfile.completedTasks} tareas completadas! Tu dedicación es admirable."
+                    userProfile.currentStreak >= 7 -> "¡Increíble racha de ${userProfile.currentStreak} días! Eres un verdadero campeón."
+                    userProfile.tasksCompleted >= 10 -> "¡${userProfile.tasksCompleted} tareas completadas! Tu dedicación es admirable."
                     userProfile.level >= 3 -> "¡Nivel ${userProfile.level}! Tu progreso es impresionante."
                     else -> "¡Cada tarea completada te acerca más a tus objetivos!"
                 },
