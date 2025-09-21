@@ -1,216 +1,175 @@
-# 📚 Documentación Técnica - Gestor de Tareas Gamificado
+# 🧑‍💻 Documentación Técnica del Proyecto — Gestor de Tareas Gamificado
 
-## 🔧 Arquitectura del Proyecto
+Esta guía técnica explica de forma clara la arquitectura, los componentes y los procesos del proyecto para que cualquier persona nueva pueda comprender qué es cada cosa y para qué sirve.
 
-### Estructura de Archivos
+## 1) Resumen del Proyecto
+
+- Tipo: Aplicación Android nativa, módulo único (app)
+- Paradigma UI: Jetpack Compose (Material 3) + Navigation Compose
+- Arquitectura: MVVM (Model–View–ViewModel)
+- Funcionalidades clave: gestión de tareas, perfil gamificado (XP, niveles, insignias), reportes, galería con zoom (ImageView personalizado)
+
+## 2) Stack Tecnológico y Versiones
+
+- Lenguaje: Kotlin (libs.versions.toml → kotlin = 2.0.21)
+- Android Gradle Plugin: 8.12.2
+- SDKs: compileSdk = 36, targetSdk = 36, minSdk = 24
+- JVM Target: 11
+- UI: Jetpack Compose (BOM 2024.09.00), Material3
+- Navegación: androidx.navigation:navigation-compose:2.7.6
+- ViewModel Compose: androidx.lifecycle:lifecycle-viewmodel-compose:2.7.0
+- Otros: AppCompat, Material Components, DrawerLayout, Fragment KTX (compatibilidad con recursos de Drawer y Fragments)
+
+Los plugins y dependencias están declarados en `gradle/libs.versions.toml` y referenciados desde `app/build.gradle.kts`.
+
+## 3) Estructura del Repositorio
+
 ```
-app/src/main/java/com/example/ejercicio2/
-├── MainActivity.kt                 # Actividad principal con Compose Navigation
-├── ImageZoomActivity.kt           # Actividad de galería con zoom
-├── ZoomableImageView.kt          # ImageView personalizado con gestos
-├── data/
-│   ├── Models.kt                 # Modelos de datos (Task, UserProfile, etc.)
-│   └── TaskManagerViewModel.kt   # ViewModel con lógica de negocio
-├── screens/                      # Pantallas Compose
-│   ├── DashboardScreen.kt
-│   ├── AddTaskScreen.kt
-│   ├── TaskListScreen.kt
-│   ├── ProfileScreen.kt
-│   └── ReportsScreen.kt
-└── ui/theme/                     # Tema y colores personalizados
-    ├── Color.kt
-    ├── Theme.kt
-    └── Type.kt
-```
-
-## 📱 Respuestas a Preguntas Técnicas
-
-### 1. Comunicación entre Fragmentos - Mejores Prácticas
-
-#### 🎯 **ViewModel Compartido (Recomendado)**
-```kotlin
-// En Activity/Fragment padre
-class SharedViewModel : ViewModel() {
-    private val _selectedData = MutableLiveData<String>()
-    val selectedData: LiveData<String> = _selectedData
-    
-    fun updateSelection(data: String) {
-        _selectedData.value = data
-    }
-}
-
-// En Fragment A (envía datos)
-viewModel.updateSelection("nuevo dato")
-
-// En Fragment B (recibe datos)
-viewModel.selectedData.observe(this) { data ->
-    // Actualizar UI
-}
-```
-
-#### 🔄 **Interface Pattern**
-```kotlin
-interface FragmentCommunicationListener {
-    fun onDataChanged(data: String)
-}
-
-class FragmentA : Fragment() {
-    private lateinit var listener: FragmentCommunicationListener
-    
-    override fun onAttach(context: Context) {
-        super.onAttach(context)
-        listener = context as FragmentCommunicationListener
-    }
-}
+.
+├── build.gradle.kts
+├── settings.gradle.kts
+├── gradle/                    # Catálogo de versiones y wrapper
+│   └── libs.versions.toml
+└── app/
+    ├── build.gradle.kts
+    ├── proguard-rules.pro
+    └── src/
+        ├── main/
+        │   ├── AndroidManifest.xml
+        │   ├── java/com/example/ejercicio2/
+        │   │   ├── MainActivity.kt                 # Punto de entrada (Compose Navigation)
+        │   │   ├── ImageZoomActivity.kt            # Galería independiente con zoom
+        │   │   ├── ZoomableImageView.kt            # ImageView personalizado para gestos (pinch/double-tap/drag)
+        │   │   ├── data/Models.kt                  # Modelos de dominio (Task, User, enums)
+        │   │   ├── viewmodel/TaskManagerViewModel.kt  # Lógica de negocio/estado (MVVM)
+        │   │   └── screens/                        # Pantallas Compose
+        │   │       ├── DashboardScreen.kt
+        │   │       ├── TaskListScreen.kt
+        │   │       ├── AddTaskScreen.kt
+        │   │       ├── ProfileScreen.kt
+        │   │       └── ReportsScreen.kt
+        │   └── res/
+        │       ├── drawable/                       # Íconos, vectores e imágenes (img_task1/2/3)
+        │       ├── layout/                         # activity_main_drawer.xml, nav_header_main.xml
+        │       ├── menu/                           # drawer_menu.xml
+        │       ├── anim/                           # slide_in_right.xml, slide_out_left.xml
+        │       └── values/                         # strings.xml, colors.xml, dimens.xml, themes.xml
+        ├── test/java/...                           # Tests unitarios (ExampleUnitTest.kt)
+        └── androidTest/java/...                    # Tests instrumentados (ExampleInstrumentedTest.kt)
 ```
 
-#### ⚡ **Beneficios de Eficiencia**
-- **Memoria**: ViewModel sobrevive a rotaciones de pantalla
-- **Rendimiento**: Evita recreación innecesaria de objetos
-- **Mantenibilidad**: Separación clara de responsabilidades
+## 4) Arquitectura y Flujo de Datos
 
-### 2. Optimización de Navigation Drawer
+- Patrón: MVVM con navegación por Compose.
+- Origen de verdad: `TaskManagerViewModel` expone estado (listas de tareas, usuario) que consumen las screens.
+- Render: Pantallas Compose (View) leen estado y emiten acciones (events) hacia el ViewModel.
+- Navegación: `MainActivity` configura el grafo con Navigation Compose y un BottomNavigation para moverse entre screens.
+- Extras: Se mantienen recursos de Navigation Drawer con Fragments para compatibilidad/legacy, pero la versión final usa Compose puro.
 
-#### 🎨 **Implementación Optimizada**
-```kotlin
-class MainActivity : AppCompatActivity() {
-    private lateinit var drawerLayout: DrawerLayout
-    private lateinit var navigationView: NavigationView
-    
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        
-        // Configuración lazy loading
-        navigationView.setNavigationItemSelectedListener { menuItem ->
-            when (menuItem.itemId) {
-                R.id.nav_dashboard -> loadFragment(DashboardFragment(), false)
-                R.id.nav_gallery -> loadFragment(GalleryFragment(), true)
-            }
-            drawerLayout.closeDrawer(GravityCompat.START)
-            true
-        }
-    }
-    
-    private fun loadFragment(fragment: Fragment, addToBackStack: Boolean) {
-        val transaction = supportFragmentManager.beginTransaction()
-        transaction.setCustomAnimations(
-            R.anim.slide_in_right,
-            R.anim.slide_out_left,
-            R.anim.slide_in_left,
-            R.anim.slide_out_right
-        )
-        transaction.replace(R.id.fragment_container, fragment)
-        if (addToBackStack) transaction.addToBackStack(null)
-        transaction.commit()
-    }
-}
+### Componentes principales
+
+- Modelos (`data/Models.kt`):
+  - `User`: currentXP, level, badges, currentStreak, tasksCompleted.
+  - `Task`: id, title, description, category, priority, dueDate, status, xpReward.
+  - Enums: `TaskCategory`, `TaskPriority`, `TaskStatus`.
+
+- ViewModel (`viewmodel/TaskManagerViewModel.kt`):
+  - `addTask(task)`: agrega una tarea a la lista.
+  - `completeTask(task)`: marca como completada, suma XP y contabiliza progreso.
+  - `deleteTask(taskId)`: elimina por identificador.
+  - Selectores: `getPendingTasks()`, `getCompletedTasks()`, `getTasksByCategory()`.
+
+- Navegación/UI:
+  - `MainActivity.kt`: hospeda `NavHost` Compose, BottomNavigation y rutas.
+  - Screens: Dashboard, Task List, Add Task, Profile, Reports.
+  - Galería: `ImageZoomActivity` + `ZoomableImageView` (no Compose) para zoom avanzado.
+
+## 5) Descripción de Pantallas
+
+- DashboardScreen: Resumen del perfil (XP/Level/Streak), tareas destacadas, acciones rápidas.
+- TaskListScreen: Lista de tareas con filtros por estado/categoría/prioridad; acciones completar/eliminar.
+- AddTaskScreen: Formulario de alta; calcula `xpReward` según prioridad y captura `dueDate`.
+- ProfileScreen: Métricas del usuario (XP, nivel, tareas completadas, racha) y progreso visual.
+- ReportsScreen: Estadísticas agregadas; barras/indicadores; uso de `HorizontalDivider`.
+- ImageZoomActivity: Muestra tres imágenes temáticas (estudio, ejercicio, comida) con zoom y arrastre.
+
+## 6) Recursos y Configuración (res/)
+
+- drawable/: íconos (ic_*), vectores img_task1/2/3, fondos (nav_header_background), avatar.
+- anim/: transiciones `slide_in_right.xml`, `slide_out_left.xml`.
+- layout/: `activity_main_drawer.xml`, `nav_header_main.xml` (legado Navigation Drawer).
+- menu/: `drawer_menu.xml` (opciones del cajón legadas).
+- values/: `strings.xml` (textos), `colors.xml`, `themes.xml` (Material 3), `dimens.xml`.
+
+## 7) Build, Ejecución y Entorno
+
+Requisitos:
+- Android Studio (Giraffe o superior recomendado)
+- JDK 11
+- SDK Android 36 instalado
+
+Comandos (PowerShell, en la raíz del proyecto):
+
+```powershell
+# Limpieza y build
+./gradlew clean ; ./gradlew assembleDebug
+
+# Pruebas unitarias
+./gradlew test
+
+# Pruebas instrumentadas (requiere dispositivo/emulador)
+./gradlew connectedAndroidTest
 ```
 
-#### ♿ **Accesibilidad y UX**
-```xml
-<com.google.android.material.navigation.NavigationView
-    android:layout_width="wrap_content"
-    android:layout_height="match_parent"
-    android:layout_gravity="start"
-    android:contentDescription="@string/navigation_menu_description"
-    app:headerLayout="@layout/nav_header"
-    app:menu="@menu/drawer_menu"
-    app:itemIconTint="@color/nav_item_color_selector"
-    app:itemTextColor="@color/nav_item_color_selector" />
-```
+Ejecución:
+- Desde Android Studio: Run ▶ Selecciona un emulador/dispositivo.
+- El artifact debug se genera en `app/build/outputs/apk/debug/`.
 
-### 3. Personalización de App Bar
+## 8) Estándares de Código y Buenas Prácticas
 
-#### 🎨 **Toolbar Personalizado**
-```kotlin
-class CustomActivity : AppCompatActivity() {
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        
-        val toolbar = findViewById<Toolbar>(R.id.custom_toolbar)
-        setSupportActionBar(toolbar)
-        
-        supportActionBar?.apply {
-            setDisplayHomeAsUpEnabled(true)
-            setDisplayShowTitleEnabled(false) // Usar título personalizado
-        }
-        
-        // Título personalizado con animación
-        val titleView = findViewById<TextView>(R.id.toolbar_title)
-        titleView.alpha = 0f
-        titleView.animate().alpha(1f).duration = 500
-    }
-}
-```
+- Kotlin idiomático, null-safety, funciones puras donde aplique.
+- Compose: estados inmutables desde ViewModel; evitar lógica pesada en Composables.
+- Nombres consistentes en modelos (`xpReward`, `currentXP`, `currentStreak`).
+- Convenciones de commits: Conventional Commits (ej. `feat:`, `fix:`, `docs:`).
+- Dependencias: centralizadas en `libs.versions.toml`.
 
-#### 📱 **Compatibilidad Multi-dispositivo**
-```xml
-<!-- values/styles.xml -->
-<style name="CustomAppTheme" parent="Theme.Material3.DayNight.NoActionBar">
-    <item name="colorPrimary">@color/primary_color</item>
-    <item name="colorPrimaryVariant">@color/primary_variant</item>
-    <item name="android:statusBarColor">@color/status_bar_color</item>
-</style>
+## 9) Pruebas
 
-<!-- values-v21/styles.xml -->
-<style name="CustomAppTheme" parent="Theme.Material3.DayNight.NoActionBar">
-    <item name="android:statusBarColor">@android:color/transparent</item>
-    <item name="android:windowDrawsSystemBarBackgrounds">true</item>
-</style>
-```
+- Unit tests: `src/test/java/.../ExampleUnitTest.kt` (base para ampliar lógica de ViewModel y selectores).
+- Instrumented tests: `src/androidTest/java/.../ExampleInstrumentedTest.kt`.
+- Recomendado: agregar tests para cálculos de XP/levels y filtros de tareas.
 
-## 🚀 Implementación en el Proyecto Actual
+## 10) Guía de Contribución
 
-### Aplicación en Gestor de Tareas
+1. Crear rama feature: `feature/<breve-descripcion>`
+2. Implementar cambios, actualizar docs si corresponde.
+3. Ejecutar build y tests localmente.
+4. Commit con mensaje claro (Conventional Commits).
+5. Pull Request a `main` con descripción y capturas si aplica.
 
-El proyecto actual utiliza **Jetpack Compose** con navegación moderna, pero los principios se aplican:
+## 11) Solución de Problemas (FAQ)
 
-1. **ViewModel Compartido**: `TaskManagerViewModel` maneja estado global
-2. **Navegación Consistente**: `NavController` con bottom navigation
-3. **Experiencia Fluida**: Transiciones suaves entre pantallas
+- CRLF/LF warnings al hacer git add: normales en Windows; no afectan la build.
+- Error de credenciales Git: instala/activa Git Credential Manager o usa PAT HTTPS.
+- Fallos de Preview Compose: invalida cachés y reinicia, o usa build Gradle.
+- SDK no encontrado: asegúrate de tener API 36 instalada y `local.properties` configurado.
 
-### Evolución Futura: Navigation Drawer
+## 12) Seguridad y Privacidad
 
-```kotlin
-// Propuesta para migración híbrida
-@Composable
-fun HybridNavigationApp() {
-    val drawerState = rememberDrawerState(DrawerValue.Closed)
-    
-    ModalNavigationDrawer(
-        drawerState = drawerState,
-        drawerContent = {
-            DrawerContent(
-                items = listOf(
-                    DrawerItem("Dashboard", Icons.Default.Dashboard),
-                    DrawerItem("Galería", Icons.Default.Photo),
-                    DrawerItem("Configuración", Icons.Default.Settings)
-                )
-            )
-        }
-    ) {
-        // Contenido principal con Compose Navigation existente
-        TaskManagerApp()
-    }
-}
-```
+- Sin acceso a red ni almacenamiento sensible por defecto.
+- Datos en memoria volatil gestionados por ViewModel.
 
-## 📊 Métricas de Rendimiento
+## 13) Internacionalización
 
-### Optimizaciones Implementadas
+- Textos centralizados en `res/values/strings.xml` para facilitar i18n.
 
-1. **Carga Lazy**: Imágenes se cargan solo cuando se necesitan
-2. **Gestión de Memoria**: Matrix reutilizable en ZoomableImageView
-3. **Smooth Animations**: 60 FPS en gestos de zoom
-4. **Resource Efficiency**: Vector drawables escalables
+## 14) Roadmap sugerido
 
-### Mejoras Futuras
-
-- **Fragment Caching** para navegación instantánea
-- **Image Compression** para fotos capturadas
-- **Background Processing** para operaciones pesadas
-- **Database Optimization** con Room para persistencia
+- Persistencia con Room (tareas y perfil) + repositorios.
+- Sincronización opcional/cloud y login.
+- Tests de UI con Espresso/Compose Testing.
+- Drawer en Compose (ModalNavigationDrawer) alineado con navegación actual.
 
 ---
 
-*Esta documentación refleja las mejores prácticas de desarrollo Android moderno, enfocándose en experiencia de usuario, rendimiento y mantenibilidad del código.*
+Si necesitas un mapa rápido: `MainActivity` (navegación), `TaskManagerViewModel` (estado/lógica), `Models.kt` (dominio), screens en `screens/`, y galería en `ImageZoomActivity`/`ZoomableImageView`.
