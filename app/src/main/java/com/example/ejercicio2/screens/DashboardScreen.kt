@@ -22,6 +22,7 @@ import androidx.compose.ui.unit.sp
 import com.example.ejercicio2.data.*
 import com.example.ejercicio2.ui.theme.*
 import com.example.ejercicio2.viewmodel.TaskManagerViewModel
+import java.util.*
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -56,6 +57,11 @@ fun DashboardScreen(
             completedCount = completedTasks.size,
             streak = userProfile.currentStreak
         )
+        
+        Spacer(modifier = Modifier.height(24.dp))
+        
+        // Sesiones de Estudio
+        StudySessionsSection(viewModel = viewModel)
         
         Spacer(modifier = Modifier.height(24.dp))
         
@@ -402,9 +408,185 @@ private fun TaskItemCompact(
                 Icon(
                     Icons.Default.CheckCircle,
                     contentDescription = "Completar",
-                    tint = TaskComplete
                 )
             }
         }
     }
+}
+
+@Composable
+fun StudySessionsSection(viewModel: TaskManagerViewModel) {
+    var showScheduleDialog by remember { mutableStateOf(false) }
+    
+    Column {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                text = "📅 Sesiones de Estudio",
+                fontSize = 20.sp,
+                fontWeight = FontWeight.Bold,
+                color = TextPrimary
+            )
+            
+            OutlinedButton(
+                onClick = { showScheduleDialog = true },
+                modifier = Modifier.height(36.dp)
+            ) {
+                Icon(
+                    Icons.Default.Schedule,
+                    contentDescription = "Programar",
+                    modifier = Modifier.size(16.dp)
+                )
+                Spacer(modifier = Modifier.width(4.dp))
+                Text("Programar", fontSize = 12.sp)
+            }
+        }
+        
+        Spacer(modifier = Modifier.height(12.dp))
+        
+        // Indicador de estado del calendario
+        if (viewModel.hasCalendarPermissions()) {
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                colors = CardDefaults.cardColors(containerColor = StudyColor.copy(alpha = 0.1f))
+            ) {
+                Row(
+                    modifier = Modifier.padding(16.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Icon(
+                        Icons.Default.CheckCircle,
+                        contentDescription = "Conectado",
+                        tint = StudyColor,
+                        modifier = Modifier.size(24.dp)
+                    )
+                    Spacer(modifier = Modifier.width(12.dp))
+                    Column {
+                        Text(
+                            text = "Calendario conectado",
+                            fontWeight = FontWeight.Medium,
+                            color = StudyColor
+                        )
+                        Text(
+                            text = "Las tareas se programarán automáticamente",
+                            fontSize = 12.sp,
+                            color = TextSecondary
+                        )
+                    }
+                }
+            }
+        } else {
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                colors = CardDefaults.cardColors(containerColor = androidx.compose.ui.graphics.Color(0xFFFF9800).copy(alpha = 0.1f))
+            ) {
+                Row(
+                    modifier = Modifier.padding(16.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Icon(
+                        Icons.Default.Warning,
+                        contentDescription = "Sin permisos",
+                        tint = androidx.compose.ui.graphics.Color(0xFFFF9800),
+                        modifier = Modifier.size(24.dp)
+                    )
+                    Spacer(modifier = Modifier.width(12.dp))
+                    Column {
+                        Text(
+                            text = "Permisos de calendario necesarios",
+                            fontWeight = FontWeight.Medium,
+                            color = androidx.compose.ui.graphics.Color(0xFFFF9800)
+                        )
+                        Text(
+                            text = "Permite el acceso para programar sesiones",
+                            fontSize = 12.sp,
+                            color = TextSecondary
+                        )
+                    }
+                }
+            }
+        }
+    }
+    
+    // Dialog para programar sesión
+    if (showScheduleDialog) {
+        QuickScheduleDialog(
+            onDismiss = { showScheduleDialog = false },
+            onSchedule = { subject, minutes ->
+                val calendar = Calendar.getInstance().apply {
+                    add(Calendar.HOUR_OF_DAY, 1) // 1 hora desde ahora
+                }
+                viewModel.scheduleStudySession(
+                    subject = subject,
+                    description = "Sesión de estudio programada desde la app",
+                    dateTime = calendar,
+                    durationMinutes = minutes
+                )
+                showScheduleDialog = false
+            }
+        )
+    }
+}
+
+@Composable
+fun QuickScheduleDialog(
+    onDismiss: () -> Unit,
+    onSchedule: (String, Int) -> Unit
+) {
+    var selectedSubject by remember { mutableStateOf("Matemáticas") }
+    var selectedDuration by remember { mutableStateOf(60) }
+    
+    val subjects = listOf("Matemáticas", "Historia", "Ciencias", "Literatura", "Idiomas")
+    val durations = listOf(30, 60, 90, 120)
+    
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("📚 Programar Sesión de Estudio") },
+        text = {
+            Column {
+                Text("Materia:")
+                Spacer(modifier = Modifier.height(8.dp))
+                LazyRow {
+                    items(subjects) { subject ->
+                        FilterChip(
+                            onClick = { selectedSubject = subject },
+                            label = { Text(subject, fontSize = 12.sp) },
+                            selected = selectedSubject == subject,
+                            modifier = Modifier.padding(horizontal = 4.dp)
+                        )
+                    }
+                }
+                
+                Spacer(modifier = Modifier.height(16.dp))
+                
+                Text("Duración (minutos):")
+                Spacer(modifier = Modifier.height(8.dp))
+                LazyRow {
+                    items(durations) { duration ->
+                        FilterChip(
+                            onClick = { selectedDuration = duration },
+                            label = { Text("${duration}min", fontSize = 12.sp) },
+                            selected = selectedDuration == duration,
+                            modifier = Modifier.padding(horizontal = 4.dp)
+                        )
+                    }
+                }
+            }
+        },
+        confirmButton = {
+            Button(
+                onClick = { onSchedule(selectedSubject, selectedDuration) }
+            ) {
+                Text("Programar")
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text("Cancelar")
+            }
+        }
+    )
 }

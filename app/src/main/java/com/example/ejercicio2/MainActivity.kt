@@ -15,6 +15,9 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import androidx.compose.animation.*
+import androidx.compose.animation.core.*
+import androidx.compose.runtime.*
 import com.example.ejercicio2.screens.*
 import com.example.ejercicio2.ui.theme.Ejercicio2Theme
 import com.example.ejercicio2.viewmodel.TaskManagerViewModel
@@ -43,6 +46,11 @@ class MainActivity : ComponentActivity() {
         val navController = rememberNavController()
         val viewModel: TaskManagerViewModel = viewModel()
         
+        // Inicializar servicio de calendario
+        LaunchedEffect(Unit) {
+            viewModel.initializeCalendarService(this@MainActivity)
+        }
+        
         Scaffold(
             bottomBar = {
                 BottomNavigationBar(navController = navController)
@@ -64,7 +72,31 @@ class MainActivity : ComponentActivity() {
             NavHost(
                 navController = navController,
                 startDestination = "dashboard",
-                modifier = Modifier.padding(innerPadding)
+                modifier = Modifier.padding(innerPadding),
+                enterTransition = {
+                    slideInHorizontally(
+                        animationSpec = tween(300),
+                        initialOffsetX = { fullWidth -> fullWidth }
+                    ) + fadeIn(animationSpec = tween(300))
+                },
+                exitTransition = {
+                    slideOutHorizontally(
+                        animationSpec = tween(300),
+                        targetOffsetX = { fullWidth -> -fullWidth }
+                    ) + fadeOut(animationSpec = tween(300))
+                },
+                popEnterTransition = {
+                    slideInHorizontally(
+                        animationSpec = tween(300),
+                        initialOffsetX = { fullWidth -> -fullWidth }
+                    ) + fadeIn(animationSpec = tween(300))
+                },
+                popExitTransition = {
+                    slideOutHorizontally(
+                        animationSpec = tween(300),
+                        targetOffsetX = { fullWidth -> fullWidth }
+                    ) + fadeOut(animationSpec = tween(300))
+                }
             ) {
                 composable("dashboard") {
                     DashboardScreen(

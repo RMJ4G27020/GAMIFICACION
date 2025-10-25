@@ -3,9 +3,14 @@ package com.example.ejercicio2.viewmodel
 import androidx.lifecycle.ViewModel
 import androidx.compose.runtime.*
 import com.example.ejercicio2.data.*
+import com.example.ejercicio2.calendar.CalendarService
+import android.content.Context
 import java.time.LocalDate
+import java.util.*
 
 class TaskManagerViewModel : ViewModel() {
+    
+    private var calendarService: CalendarService? = null
     
     // Lista de tareas
     private val _tasks = mutableStateListOf<Task>()
@@ -65,8 +70,31 @@ class TaskManagerViewModel : ViewModel() {
         ))
     }
     
+    /**
+     * Inicializa el servicio de calendario
+     */
+    fun initializeCalendarService(context: Context) {
+        calendarService = CalendarService(context)
+    }
+    
     fun addTask(task: Task) {
-        _tasks.add(task.copy(id = (_tasks.size + 1).toString()))
+        val newTask = task.copy(id = (_tasks.size + 1).toString())
+        _tasks.add(newTask)
+        
+        // Programar en calendario si hay fecha límite y permisos
+        calendarService?.let { calendar ->
+            if (calendar.hasCalendarPermissions()) {
+                val deadlineCalendar = Calendar.getInstance().apply {
+                    val localDate = newTask.dueDate
+                    set(localDate.year, localDate.monthValue - 1, localDate.dayOfMonth, 9, 0, 0)
+                }
+                calendar.scheduleTaskDeadline(
+                    taskTitle = newTask.title,
+                    description = newTask.description,
+                    deadlineDate = deadlineCalendar
+                )
+            }
+        }
     }
     
     fun completeTask(task: Task) {
@@ -111,5 +139,26 @@ class TaskManagerViewModel : ViewModel() {
     
     fun getTasksByCategory(category: TaskCategory): List<Task> {
         return _tasks.filter { it.category == category }
+    }
+    
+    /**
+     * Programa una sesión de estudio en el calendario
+     */
+    fun scheduleStudySession(
+        subject: String,
+        description: String,
+        dateTime: Calendar,
+        durationMinutes: Int = 90
+    ): Boolean {
+        return calendarService?.scheduleStudySession(
+            subject, description, dateTime, durationMinutes
+        ) ?: false
+    }
+    
+    /**
+     * Verifica si hay permisos de calendario
+     */
+    fun hasCalendarPermissions(): Boolean {
+        return calendarService?.hasCalendarPermissions() ?: false
     }
 }

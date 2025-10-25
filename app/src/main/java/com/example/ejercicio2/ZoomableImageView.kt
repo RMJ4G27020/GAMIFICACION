@@ -7,6 +7,9 @@ import android.util.AttributeSet
 import android.view.GestureDetector
 import android.view.MotionEvent
 import android.view.ScaleGestureDetector
+import android.animation.ValueAnimator
+import android.animation.AnimatorSet
+import android.view.animation.DecelerateInterpolator
 import androidx.appcompat.widget.AppCompatImageView
 import kotlin.math.max
 import kotlin.math.min
@@ -27,6 +30,8 @@ class ZoomableImageView @JvmOverloads constructor(
     private var scaleFactor = 1f
     private var minScale = 1f
     private var maxScale = 4f
+    
+    private var currentAnimator: ValueAnimator? = null
 
     private val scaleDetector = ScaleGestureDetector(context, ScaleListener())
     private val gestureDetector = GestureDetector(context, GestureListener())
@@ -87,12 +92,26 @@ class ZoomableImageView @JvmOverloads constructor(
 
     private inner class GestureListener : GestureDetector.SimpleOnGestureListener() {
         override fun onDoubleTap(e: MotionEvent): Boolean {
-            // Toggle zoom
-            val target = if (scaleFactor > minScale) minScale else 2f
-            val scaleChange = target / scaleFactor
-            scaleFactor = target
-            matrix.postScale(scaleChange, scaleChange, e.x, e.y)
-            imageMatrix = matrix
+            // Cancel any running animation
+            currentAnimator?.cancel()
+            
+            val targetScale = if (scaleFactor > minScale) minScale else 2f
+            val startScale = scaleFactor
+            
+            // Animate zoom transition
+            currentAnimator = ValueAnimator.ofFloat(0f, 1f).apply {
+                duration = 250
+                interpolator = DecelerateInterpolator()
+                addUpdateListener { animator ->
+                    val progress = animator.animatedValue as Float
+                    val currentScale = startScale + (targetScale - startScale) * progress
+                    val scaleChange = currentScale / scaleFactor
+                    scaleFactor = currentScale
+                    matrix.postScale(scaleChange, scaleChange, e.x, e.y)
+                    imageMatrix = matrix
+                }
+                start()
+            }
             return true
         }
     }
