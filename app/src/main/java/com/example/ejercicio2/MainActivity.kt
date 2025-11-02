@@ -22,11 +22,16 @@ import com.example.ejercicio2.screens.*
 import com.example.ejercicio2.ui.theme.Ejercicio2Theme
 import com.example.ejercicio2.viewmodel.TaskManagerViewModel
 import androidx.compose.material.icons.automirrored.filled.Assignment
+import com.example.ejercicio2.database.DatabaseInitializer
+import android.util.Log
 
 class MainActivity : ComponentActivity() {
     
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        
+        // Inicializar base de datos
+        initializeDatabase()
         
         setContent {
             Ejercicio2Theme {
@@ -173,6 +178,45 @@ class MainActivity : ComponentActivity() {
                 selected = false,
                 onClick = { navController.navigate("reports") }
             )
+        }
+    }
+    
+    /**
+     * Inicializa la base de datos SQLite
+     * Crea el archivo .db y datos iniciales
+     */
+    private fun initializeDatabase() {
+        try {
+            // Inicializar BD con datos de ejemplo (cambiar a false en producción)
+            val success = DatabaseInitializer.initialize(this, createSampleData = true)
+            
+            if (success) {
+                // Obtener información de la BD
+                val dbInfo = DatabaseInitializer.getDatabaseInfo(this)
+                
+                Log.d("MainActivity", "✅ Base de datos inicializada correctamente")
+                Log.d("MainActivity", "📍 Ruta: ${dbInfo.path}")
+                Log.d("MainActivity", "📦 Tamaño: ${dbInfo.getSizeInKB()}")
+                Log.d("MainActivity", "🔢 Versión: ${dbInfo.version}")
+                Log.d("MainActivity", "✔️ Existe: ${dbInfo.exists}")
+                
+                // Mostrar ruta en consola para que el usuario pueda encontrarla
+                println("\n" + "=".repeat(80))
+                println("🗄️  BASE DE DATOS CREADA EXITOSAMENTE")
+                println("=".repeat(80))
+                println("📍 Ubicación del archivo .db:")
+                println("   ${dbInfo.path}")
+                println("\n💡 Para ver la base de datos:")
+                println("   1. Usa Android Studio Database Inspector")
+                println("   2. O descarga el archivo desde Device File Explorer")
+                println("   3. Abre con DB Browser for SQLite")
+                println("=".repeat(80) + "\n")
+            } else {
+                Log.e("MainActivity", "❌ Error al inicializar la base de datos")
+            }
+        } catch (e: Exception) {
+            Log.e("MainActivity", "❌ Error crítico al crear BD", e)
+            e.printStackTrace()
         }
     }
 }
