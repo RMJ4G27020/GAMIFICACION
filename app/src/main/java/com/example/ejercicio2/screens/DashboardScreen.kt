@@ -19,9 +19,12 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.platform.LocalContext
+import android.content.Intent
 import com.example.ejercicio2.data.*
 import com.example.ejercicio2.ui.theme.*
 import com.example.ejercicio2.viewmodel.TaskManagerViewModel
+import com.example.ejercicio2.DatabaseDebugActivity
 import java.util.*
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -126,6 +129,28 @@ fun DashboardScreen(
                 contentDescription = "Agregar tarea",
                 tint = Color.White
             )
+        }
+        
+        Spacer(modifier = Modifier.height(8.dp))
+        
+        // Botón de Debug de Base de Datos
+        val context = LocalContext.current
+        FilledTonalButton(
+            onClick = {
+                context.startActivity(Intent(context, DatabaseDebugActivity::class.java))
+            },
+            modifier = Modifier.fillMaxWidth(),
+            colors = ButtonDefaults.filledTonalButtonColors(
+                containerColor = androidx.compose.ui.graphics.Color(0xFFFF9800)
+            )
+        ) {
+            Icon(
+                Icons.Default.Storage,
+                contentDescription = null,
+                modifier = Modifier.size(20.dp)
+            )
+            Spacer(modifier = Modifier.width(8.dp))
+            Text("🗄️ Ver Estado de Base de Datos")
         }
     }
 }

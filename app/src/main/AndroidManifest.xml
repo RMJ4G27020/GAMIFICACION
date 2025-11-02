@@ -31,8 +31,17 @@
             android:name=".ImageZoomActivity"
             android:label="Galería con Zoom"
             android:parentActivityName=".MainActivity" />
-
-
+        
+        <activity
+            android:name=".DatabaseDebugActivity"
+            android:label="Database Debug"
+            android:exported="true"
+            android:parentActivityName=".MainActivity">
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+        </activity>
 
     </application>
 
