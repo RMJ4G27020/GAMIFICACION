@@ -4,7 +4,6 @@
 
 **Asignatura:** Desarrollo de Aplicaciones Móviles  
 **Actividad:** 9 - Implementación de Base de Datos SQLite  
-**Estudiante:** Ricardo Jiménez  
 **Repositorio:** [GAMIFICACION](https://github.com/RMJ4G27020/GAMIFICACION)  
 **Fecha:** Noviembre 2025
 
