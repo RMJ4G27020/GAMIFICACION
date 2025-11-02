@@ -109,7 +109,7 @@ CREATE TABLE IF NOT EXISTS user_badges (
     
     -- Relaciones
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
-    FOREIGN KEY (badge_id) REFERENCES badges(badge_id) ON DELETE CASCADE,
+    FOREIGN KEY (badge_id) REFERENCES badges(id) ON DELETE CASCADE,
     
     -- Un usuario no puede tener el mismo badge duplicado
     UNIQUE(user_id, badge_id)
