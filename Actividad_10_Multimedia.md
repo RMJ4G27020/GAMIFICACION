@@ -4,7 +4,7 @@
 
 **Asignatura:** Desarrollo de Aplicaciones Móviles  
 **Actividad:** 10 - Implementación de Elementos Multimedia  
-**Estudiante:** Ricardo Jiménez  
+**Estudiante:** JOSE RICO
 **Repositorio:** [GAMIFICACION](https://github.com/RMJ4G27020/GAMIFICACION)  
 **Fecha:** Noviembre 2025
 
