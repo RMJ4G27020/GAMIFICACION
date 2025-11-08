@@ -32,6 +32,17 @@ fun ProfileScreen(
 ) {
     val userProfile = viewModel.userProfile
     
+    // Si el usuario no está cargado, mostrar indicador
+    if (userProfile == null) {
+        Box(
+            modifier = Modifier.fillMaxSize(),
+            contentAlignment = Alignment.Center
+        ) {
+            CircularProgressIndicator()
+        }
+        return
+    }
+    
     LazyColumn(
         modifier = Modifier
             .fillMaxSize()

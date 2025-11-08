@@ -9,9 +9,11 @@ import android.database.sqlite.SQLiteOpenHelper
  * 
  * Esta clase maneja la creación, actualización y acceso a la base de datos
  * local de la aplicación de Gestor de Tareas Gamificado.
+ * 
+ * Patrón Singleton para evitar múltiples instancias de la base de datos
  */
-class DatabaseHelper(context: Context) : SQLiteOpenHelper(
-    context,
+class DatabaseHelper private constructor(context: Context) : SQLiteOpenHelper(
+    context.applicationContext,
     DATABASE_NAME,
     null,
     DATABASE_VERSION
@@ -20,6 +22,18 @@ class DatabaseHelper(context: Context) : SQLiteOpenHelper(
     companion object {
         const val DATABASE_NAME = "task_gamification.db"
         const val DATABASE_VERSION = 1
+
+        @Volatile
+        private var INSTANCE: DatabaseHelper? = null
+
+        /**
+         * Obtener instancia única de DatabaseHelper (Singleton)
+         */
+        fun getInstance(context: Context): DatabaseHelper {
+            return INSTANCE ?: synchronized(this) {
+                INSTANCE ?: DatabaseHelper(context).also { INSTANCE = it }
+            }
+        }
 
         // Tabla: users
         const val TABLE_USERS = "users"
@@ -109,16 +123,6 @@ class DatabaseHelper(context: Context) : SQLiteOpenHelper(
 
         // Tabla: sync_queue
         const val TABLE_SYNC_QUEUE = "sync_queue"
-
-        // Singleton instance
-        @Volatile
-        private var instance: DatabaseHelper? = null
-
-        fun getInstance(context: Context): DatabaseHelper {
-            return instance ?: synchronized(this) {
-                instance ?: DatabaseHelper(context.applicationContext).also { instance = it }
-            }
-        }
     }
 
     override fun onCreate(db: SQLiteDatabase) {
@@ -154,22 +158,55 @@ class DatabaseHelper(context: Context) : SQLiteOpenHelper(
 
     /**
      * Ejecuta múltiples statements SQL separados por punto y coma
+     * Maneja correctamente TRIGGERS con BEGIN...END blocks
      */
     private fun executeMultipleStatements(db: SQLiteDatabase, sql: String) {
-        // Dividir por ';' pero ignorar líneas de comentarios
-        val statements = sql.split(";")
-            .map { it.trim() }
-            .filter { it.isNotEmpty() && !it.startsWith("--") }
-
-        statements.forEach { statement ->
+        // Eliminar comentarios de línea
+        val cleanSql = sql.lines()
+            .filterNot { it.trim().startsWith("--") }
+            .joinToString("\n")
+        
+        // Parser que maneja BEGIN...END blocks
+        val statements = mutableListOf<String>()
+        var currentStatement = StringBuilder()
+        var insideBlock = 0 // Contador para BEGIN...END anidados
+        
+        cleanSql.split(";").forEach { part ->
+            currentStatement.append(part).append(";")
+            
+            // Contar palabras BEGIN y END completas (no parte de otras palabras)
+            val beginMatches = "\\bBEGIN\\b".toRegex(RegexOption.IGNORE_CASE).findAll(part).count()
+            val endMatches = "\\bEND\\b".toRegex(RegexOption.IGNORE_CASE).findAll(part).count()
+            
+            insideBlock += beginMatches - endMatches
+            
+            // Si no estamos dentro de un bloque BEGIN...END, este statement está completo
+            if (insideBlock <= 0) {
+                val stmt = currentStatement.toString().trim().removeSuffix(";")
+                if (stmt.isNotBlank()) {
+                    statements.add(stmt)
+                }
+                currentStatement.clear()
+                insideBlock = 0
+            }
+        }
+        
+        android.util.Log.d("DatabaseHelper", "Ejecutando ${statements.size} statements SQL")
+        
+        statements.forEachIndexed { index, statement ->
             if (statement.isNotBlank()) {
                 try {
+                    val preview = statement.replace("\\s+".toRegex(), " ").take(80)
+                    android.util.Log.d("DatabaseHelper", "Ejecutando [${index + 1}/${statements.size}]: $preview...")
                     db.execSQL(statement)
                 } catch (e: Exception) {
-                    android.util.Log.e("DatabaseHelper", "Error executing SQL: $statement", e)
+                    android.util.Log.e("DatabaseHelper", "❌ Error en statement ${index + 1}", e)
+                    throw e
                 }
             }
         }
+        
+        android.util.Log.d("DatabaseHelper", "✅ Todos los statements ejecutados correctamente")
     }
 
     /**
@@ -436,4 +473,51 @@ class DatabaseHelper(context: Context) : SQLiteOpenHelper(
         db.execSQL("DROP TABLE IF EXISTS sync_queue")
         onCreate(db)
     }
+
+    /**
+     * Cierra la base de datos y libera recursos
+     */
+    override fun close() {
+        try {
+            writableDatabase?.close()
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+        super.close()
+    }
+
+    /**
+     * Verifica si la base de datos está corrupta
+     * @return true si la DB está corrupta, false si está OK
+     */
+    fun isDatabaseCorrupted(): Boolean {
+        return try {
+            val db = readableDatabase
+            db.rawQuery("PRAGMA integrity_check", null).use { cursor ->
+                if (cursor.moveToFirst()) {
+                    val result = cursor.getString(0)
+                    result != "ok"
+                } else {
+                    true
+                }
+            }
+        } catch (e: Exception) {
+            true
+        }
+    }
+
+    /**
+     * Obtiene el tamaño de la base de datos en bytes
+     */
+    fun getDatabaseSize(): Long {
+        return try {
+            val db = readableDatabase
+            db.path?.let { path ->
+                java.io.File(path).length()
+            } ?: 0L
+        } catch (e: Exception) {
+            0L
+        }
+    }
 }
+

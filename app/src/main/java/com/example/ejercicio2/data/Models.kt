@@ -44,7 +44,7 @@ data class Task(
     val category: TaskCategory,
     val priority: TaskPriority = TaskPriority.MEDIUM,
     val status: TaskStatus = TaskStatus.PENDING,
-    val dueDate: java.time.LocalDate = java.time.LocalDate.now(),
+    val dueDate: java.time.LocalDate,  // Sin valor por defecto - debe pasarse explícitamente
     val xpReward: Int = 10,
     val createdAt: Long = System.currentTimeMillis(),
     val completedAt: Long? = null,
@@ -91,14 +91,14 @@ object Badges {
         description = "Completaste tu primera tarea",
         icon = Icons.Default.Star
     )
-    
+
     val STREAK_3 = Badge(
-        id = "streak_3", 
+        id = "streak_3",
         name = "Constancia",
         description = "3 días consecutivos completando tareas",
         icon = Icons.Default.Whatshot
     )
-    
+
     val STUDY_MASTER = Badge(
         id = "study_master",
         name = "Maestro del Estudio",

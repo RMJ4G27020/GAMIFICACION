@@ -4,12 +4,30 @@ import android.content.ContentUris
 import android.content.ContentValues
 import android.content.Context
 import android.provider.CalendarContract
+import com.example.ejercicio2.permissions.PermissionManager
 import java.util.*
 
+/**
+ * CalendarService - Gestor de eventos de calendario
+ * 
+ * Integración con el calendario del dispositivo para:
+ * - Crear recordatorios de tareas
+ * - Programar sesiones de estudio
+ * - Alertas de fechas límite
+ */
 class CalendarService(private val context: Context) {
+    
+    private val permissionManager = PermissionManager(context)
     
     companion object {
         private const val DEFAULT_CALENDAR_ID = 1L
+    }
+    
+    /**
+     * Verifica si tenemos permisos para acceder al calendario
+     */
+    fun hasCalendarPermissions(): Boolean {
+        return permissionManager.hasCalendarPermissions()
     }
     
     /**
@@ -21,6 +39,11 @@ class CalendarService(private val context: Context) {
         startTimeMillis: Long,
         durationMinutes: Int = 60
     ): Long? {
+        // Verificar permisos
+        if (!hasCalendarPermissions()) {
+            return null
+        }
+        
         return try {
             val values = ContentValues().apply {
                 put(CalendarContract.Events.DTSTART, startTimeMillis)
@@ -33,7 +56,7 @@ class CalendarService(private val context: Context) {
             }
             
             val uri = context.contentResolver.insert(CalendarContract.Events.CONTENT_URI, values)
-            ContentUris.parseId(uri!!)
+            uri?.let { ContentUris.parseId(it) }
         } catch (e: Exception) {
             null
         }
@@ -43,6 +66,11 @@ class CalendarService(private val context: Context) {
      * Crea un recordatorio para la tarea
      */
     fun createTaskReminder(eventId: Long, minutesBefore: Int = 30): Boolean {
+        // Verificar permisos
+        if (!hasCalendarPermissions()) {
+            return false
+        }
+        
         return try {
             val values = ContentValues().apply {
                 put(CalendarContract.Reminders.EVENT_ID, eventId)
@@ -104,27 +132,6 @@ class CalendarService(private val context: Context) {
             createTaskReminder(eventId, 2 * 60)  // 2 horas antes
             true
         } else {
-            false
-        }
-    }
-    
-    /**
-     * Verifica si la app tiene permisos de calendario
-     */
-    fun hasCalendarPermissions(): Boolean {
-        return try {
-            val projection = arrayOf(CalendarContract.Calendars._ID)
-            val cursor = context.contentResolver.query(
-                CalendarContract.Calendars.CONTENT_URI,
-                projection,
-                null,
-                null,
-                null
-            )
-            val hasPermission = cursor != null
-            cursor?.close()
-            hasPermission
-        } catch (e: SecurityException) {
             false
         }
     }

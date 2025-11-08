@@ -2,45 +2,69 @@ package com.example.ejercicio2
 
 import android.content.Intent
 import android.os.Bundle
+import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.compose.animation.*
+import androidx.compose.animation.core.*
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.Assignment
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
-import androidx.compose.animation.*
-import androidx.compose.animation.core.*
-import androidx.compose.runtime.*
+import com.example.ejercicio2.database.DatabaseInitializer
 import com.example.ejercicio2.screens.*
 import com.example.ejercicio2.ui.theme.Ejercicio2Theme
 import com.example.ejercicio2.viewmodel.TaskManagerViewModel
-import androidx.compose.material.icons.automirrored.filled.Assignment
-import com.example.ejercicio2.database.DatabaseInitializer
-import android.util.Log
 
 class MainActivity : ComponentActivity() {
     
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         
-        // Inicializar base de datos
-        initializeDatabase()
-        
-        setContent {
-            Ejercicio2Theme {
-                Surface(
-                    modifier = Modifier.fillMaxSize(),
-                    color = MaterialTheme.colorScheme.background
-                ) {
-                    MainApp()
+        try {
+            // Inicializar base de datos
+            initializeDatabase()
+            
+            setContent {
+                Ejercicio2Theme {
+                    Surface(
+                        modifier = Modifier.fillMaxSize(),
+                        color = MaterialTheme.colorScheme.background
+                    ) {
+                        MainApp()
+                    }
                 }
+            }
+        } catch (e: Exception) {
+            Log.e("MainActivity", "❌ Error fatal en onCreate", e)
+            e.printStackTrace()
+            // Si falla, intentar crear sin datos de ejemplo
+            try {
+                DatabaseInitializer.initialize(this, createSampleData = false)
+                setContent {
+                    Ejercicio2Theme {
+                        Surface(
+                            modifier = Modifier.fillMaxSize(),
+                            color = MaterialTheme.colorScheme.background
+                        ) {
+                            MainApp()
+                        }
+                    }
+                }
+            } catch (e2: Exception) {
+                Log.e("MainActivity", "❌ Error crítico irrecuperable", e2)
+                finish()
             }
         }
     }
@@ -49,11 +73,21 @@ class MainActivity : ComponentActivity() {
     @Composable
     fun MainApp() {
         val navController = rememberNavController()
-        val viewModel: TaskManagerViewModel = viewModel()
+        val context = LocalContext.current
+        
+        // ViewModel con Context usando Factory
+        val viewModel: TaskManagerViewModel = viewModel(
+            factory = object : ViewModelProvider.Factory {
+                override fun <T : ViewModel> create(modelClass: Class<T>): T {
+                    @Suppress("UNCHECKED_CAST")
+                    return TaskManagerViewModel(context) as T
+                }
+            }
+        )
         
         // Inicializar servicio de calendario
         LaunchedEffect(Unit) {
-            viewModel.initializeCalendarService(this@MainActivity)
+            viewModel.initializeCalendarService(context)
         }
         
         Scaffold(
@@ -141,6 +175,12 @@ class MainActivity : ComponentActivity() {
                         onNavigateBack = { navController.popBackStack() }
                     )
                 }
+                
+                composable("permissions") {
+                    PermissionsScreen(
+                        onNavigateBack = { navController.popBackStack() }
+                    )
+                }
             }
         }
     }
@@ -177,6 +217,12 @@ class MainActivity : ComponentActivity() {
                 label = { Text("Reportes") },
                 selected = false,
                 onClick = { navController.navigate("reports") }
+            )
+            NavigationBarItem(
+                icon = { Icon(Icons.Default.PermIdentity, contentDescription = null) },
+                label = { Text("Permisos") },
+                selected = false,
+                onClick = { navController.navigate("permissions") }
             )
         }
     }

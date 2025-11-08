@@ -5,6 +5,26 @@
     <!-- Permisos para calendario -->
     <uses-permission android:name="android.permission.READ_CALENDAR" />
     <uses-permission android:name="android.permission.WRITE_CALENDAR" />
+    
+    <!-- Permisos para almacenamiento -->
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
+    <uses-permission android:name="android.permission.MANAGE_EXTERNAL_STORAGE" />
+    
+    <!-- Permisos para cámara -->
+    <uses-permission android:name="android.permission.CAMERA" />
+    
+    <!-- Permisos para contactos -->
+    <uses-permission android:name="android.permission.READ_CONTACTS" />
+    
+    <!-- Permisos para notificaciones (Android 13+) -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    
+    <!-- Permisos de internet (si se necesitan en el futuro) -->
+    <!-- <uses-permission android:name="android.permission.INTERNET" /> -->
+    
+    <!-- Declarar características opcionales -->
+    <uses-feature android:name="android.hardware.camera" android:required="false" />
 
     <application
         android:allowBackup="true"

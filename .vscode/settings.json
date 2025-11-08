@@ -1,0 +1,44 @@
+{
+    // Workspace settings for ejercicio2 Android project
+    
+    // Disable MSSQL extension for .sql files (this project uses SQLite, not MS SQL Server)
+    "mssql.enableSqlAuthenticationProvider": false,
+    
+    // Configure file associations - treat .sql files as SQLite
+    "files.associations": {
+        "*.sql": "sql"
+    },
+    
+    // Disable MSSQL intellisense for .sql files
+    "[sql]": {
+        "editor.quickSuggestions": {
+            "other": true,
+            "comments": false,
+            "strings": false
+        }
+    },
+    
+    // Exclude MSSQL extension from validating database folder
+    "mssql.excludeFolders": [
+        "**/database"
+    ],
+    
+    // Kotlin formatting settings
+    "[kotlin]": {
+        "editor.tabSize": 4,
+        "editor.insertSpaces": true,
+        "editor.formatOnSave": true
+    },
+    
+    // Gradle settings
+    "[groovy]": {
+        "editor.tabSize": 4,
+        "editor.insertSpaces": true
+    },
+    
+    // XML formatting (for Android resources)
+    "[xml]": {
+        "editor.tabSize": 4,
+        "editor.insertSpaces": true
+    }
+}

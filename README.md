@@ -1,51 +1,180 @@
 # 🎮 GAMIFICACIÓN - Gestor Integral de Tareas para Estudiantes
 
 [![Android](https://img.shields.io/badge/Android-3DDC84?style=for-the-badge&logo=android&logoColor=white)](https://developer.android.com/)
-[![Kotlin](https://img.shields.io/badge/Kotlin-0095D5?style=for-the-badge&logo=kotlin&logoColor=white)](https://kotlinlang.org/)
+[![Kotlin](https://img.shields.io/badge/Kotlin-2.0.21-0095D5?style=for-the-badge&logo=kotlin&logoColor=white)](https://kotlinlang.org/)
 [![Jetpack Compose](https://img.shields.io/badge/Jetpack%20Compose-4285F4?style=for-the-badge&logo=jetpackcompose&logoColor=white)](https://developer.android.com/jetpack/compose)
 [![Material3](https://img.shields.io/badge/Material%203-757575?style=for-the-badge&logo=material-design&logoColor=white)](https://m3.material.io/)
+[![SQLite](https://img.shields.io/badge/SQLite-003B57?style=for-the-badge&logo=sqlite&logoColor=white)](https://www.sqlite.org/)
+[![License](https://img.shields.io/badge/License-Academic-blue?style=for-the-badge)](LICENSE)
+[![Version](https://img.shields.io/badge/Version-1.0.0-green?style=for-the-badge)](CHANGELOG.md)
 
 ## 📖 Descripción
 
 **GAMIFICACIÓN** es una aplicación móvil Android innovadora que transforma la gestión de tareas estudiantiles en una experiencia gamificada y motivacional. Desarrollada con **Jetpack Compose** y **Material Design 3**, combina productividad estudiantil con elementos de juego para mantener a los usuarios comprometidos y motivados.
 
+### ✨ ¿Por qué GAMIFICACIÓN?
+
+- 🎯 **Productividad con Propósito**: Convierte tareas aburridas en desafíos emocionantes
+- 🏆 **Sistema de Recompensas**: Gana XP y desbloquea badges mientras estudias
+- 📈 **Seguimiento Inteligente**: Estadísticas detalladas de tu progreso académico
+- 🎨 **Experiencia Visual**: UI moderna y atractiva con Material 3
+- 💾 **Base de Datos Robusta**: SQLite con 9 tablas normalizadas y triggers automáticos
+
 ### 🎯 Características Principales
 
-- **🎮 Sistema de Gamificación**: XP, niveles, rachas diarias y logros
-- **📋 Gestión Completa de Tareas**: Crear, editar, completar y organizar tareas
-- **🎨 Categorías Temáticas**: Estudios, Ejercicio, Comida/Salud, Trabajo, Entretenimiento
-- **📊 Reportes Visuales**: Estadísticas de progreso y tendencias de productividad
-- **🖼️ Galería con Zoom**: ImageView interactivo con gestos de zoom funcional
-- **📱 Interfaz Moderna**: Material 3 con navegación fluida y responsive
+#### 🎮 Sistema de Gamificación Completo
+- **Sistema de XP y Niveles**: Gana experiencia completando tareas
+- **16 Badges Desbloqueables**: Desde "Primer Paso" hasta "Súper Estudiante"
+- **Rachas Diarias**: Mantén tu racha completando tareas cada día
+- **Triggers Automáticos**: La base de datos actualiza tu progreso automáticamente
+
+#### 📋 Gestión Avanzada de Tareas
+- Crear, editar, completar y eliminar tareas
+- **5 Categorías**: MATHEMATICS, SCIENCE, HISTORY, STUDY, EXERCISE
+- **3 Prioridades**: HIGH, MEDIUM, LOW con colores distintivos
+- **3 Estados**: PENDING, IN_PROGRESS, COMPLETED
+- Fechas de vencimiento con alertas visuales
+- Recompensas de XP personalizables por tarea
+
+#### 📊 Reportes y Estadísticas
+- Dashboard con métricas en tiempo real
+- Gráficos de progreso semanal/mensual
+- Análisis de productividad por categoría
+- Historial de tareas completadas
+- Vista de actividad reciente
+
+#### 🖼️ Galería con Zoom Interactivo
+- ZoomableImageView personalizado
+- Pinch-to-zoom gesture support
+- Double-tap para zoom rápido
+- Transiciones suaves entre imágenes
+
+#### 📅 Integración con Calendario
+- Sincronización automática con Google Calendar
+- Creación de eventos al agregar tareas
+- Gestión de permisos dinámica
+
+## 🚀 Quick Start
+
+### Prerrequisitos
+
+```bash
+- Android Studio Ladybug | 2024.3.1 o superior
+- JDK 11 o superior
+- Android SDK 36 (API Level 36)
+- Emulador Android o dispositivo físico con Android 7.0+
+```
+
+### Instalación
+
+```bash
+# 1. Clonar el repositorio
+git clone https://github.com/RMJ4G27020/GAMIFICACION.git
+cd GAMIFICACION
+
+# 2. Abrir en Android Studio
+# File > Open > Seleccionar carpeta del proyecto
+
+# 3. Sync Gradle
+# Android Studio sincronizará automáticamente
+
+# 4. Ejecutar
+# Click en Run ▶️ o Shift+F10
+```
+
+### Configuración de Base de Datos
+
+La base de datos se inicializa automáticamente la primera vez que ejecutas la app:
+
+```kotlin
+// MainActivity.kt - Se ejecuta automáticamente en onCreate()
+private fun initializeDatabase() {
+    DatabaseInitializer.initialize(this)
+}
+```
+
+Para visualizar la base de datos:
+- **Opción 1**: Database Inspector de Android Studio (RECOMENDADO)
+- **Opción 2**: Botón "🗄️ Ver Estado de Base de Datos" en el Dashboard
+
+## 🏗️ Arquitectura
+
+### 🎨 MVVM Pattern
+
+```
+📁 ejercicio2/
+├── 🎨 ui/
+│   └── theme/           # Material 3 theming
+├── 📱 screens/          # Composables de UI
+│   ├── DashboardScreen.kt
+│   ├── TaskListScreen.kt
+│   ├── AddTaskScreen.kt
+│   ├── ProfileScreen.kt
+│   └── ReportsScreen.kt
+├── 🧠 viewmodel/
+│   └── TaskManagerViewModel.kt
+├── 💾 database/
+│   ├── DatabaseHelper.kt
+│   └── DatabaseInitializer.kt
+└── 🏠 MainActivity.kt
+```
+
+### 💾 Base de Datos (SQLite)
+
+**9 Tablas Normalizadas (3NF)**:
+
+| Tabla | Descripción | Registros Iniciales |
+|-------|-------------|---------------------|
+| `users` | Información de usuarios | 1 |
+| `tasks` | Tareas del usuario | 5 ejemplos |
+| `badges` | Logros disponibles | 16 badges |
+| `user_badges` | Progreso de badges | 16 entradas |
+| `study_sessions` | Sesiones de estudio | 0 |
+| `daily_stats` | Estadísticas diarias | Dinámicas |
+| `activity_log` | Log de actividades | Dinámicas |
+| `app_settings` | Configuración | 4 settings |
+| `sync_queue` | Cola de sincronización | 0 |
+
+**Features de la Base de Datos**:
+- ✅ 4 Triggers automáticos (update_user_on_task_complete, etc.)
+- ✅ 4 Views optimizadas (user_performance, badge_progress, etc.)
+- ✅ 20+ Índices estratégicos
+- ✅ Foreign keys con ON DELETE CASCADE
+- ✅ UUID support para sync futuro
 
 ## 🚀 Tecnologías Utilizadas
 
-### 🏗️ Arquitectura y Frameworks
-- **Android SDK 36** (API Level 36)
-- **Kotlin 1.9+** - Lenguaje principal
-- **Jetpack Compose** - UI moderna y declarativa
+### 🏗️ Core Technologies
+- **Android SDK 36** (compileSdk 36, targetSdk 36, minSdk 24)
+- **Kotlin 2.0.21** - Lenguaje principal
+- **Jetpack Compose BOM 2024.09.00** - UI moderna y declarativa
 - **Material Design 3** - Sistema de diseño
-- **MVVM Architecture** - ViewModel + State Management
+- **SQLite 3** - Base de datos local
 
-### 📚 Librerías y Dependencias
+### 📚 Librerías Principales (Actualizadas)
+
 ```gradle
-// Jetpack Compose BOM
-implementation platform('androidx.compose:compose-bom:2024.02.00')
-
-// Core Compose
+// Jetpack Compose & Material 3
+implementation platform('androidx.compose:compose-bom:2024.09.00')
 implementation 'androidx.compose.ui:ui'
 implementation 'androidx.compose.material3:material3'
 implementation 'androidx.compose.ui:ui-tooling-preview'
 
 // Navigation & Lifecycle
-implementation 'androidx.navigation:navigation-compose:2.7.6'
-implementation 'androidx.lifecycle:lifecycle-viewmodel-compose:2.7.0'
+implementation 'androidx.navigation:navigation-compose:2.8.5'
+implementation 'androidx.lifecycle:lifecycle-viewmodel-compose:2.8.7'
 
 // Icons Extended
-implementation 'androidx.compose.material:material-icons-extended:1.5.8'
+implementation 'androidx.compose.material:material-icons-extended:1.7.5'
 
-// AppCompat (para ImageView personalizado)
-implementation 'androidx.appcompat:appcompat:1.6.1'
+// UI Components
+implementation 'androidx.constraintlayout:constraintlayout-compose:1.1.0'
+implementation 'androidx.appcompat:appcompat:1.7.0'
+implementation 'com.google.android.material:material:1.12.0'
+
+// Fragments & Drawer
+implementation 'androidx.drawerlayout:drawerlayout:1.2.0'
+implementation 'androidx.fragment:fragment-ktx:1.8.5'
 ```
 
 ## 🏛️ Arquitectura del Proyecto

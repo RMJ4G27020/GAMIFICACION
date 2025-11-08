@@ -1,5 +1,6 @@
 package com.example.ejercicio2.screens
 
+import android.annotation.SuppressLint
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -21,6 +22,7 @@ import com.example.ejercicio2.data.*
 import com.example.ejercicio2.ui.theme.*
 import com.example.ejercicio2.viewmodel.TaskManagerViewModel
 
+@SuppressLint("NewApi")
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AddTaskScreen(
@@ -207,22 +209,25 @@ fun AddTaskScreen(
                     if (title.isBlank() || selectedCategory == null) {
                         showError = true
                     } else {
-                        val newTask = Task(
-                            id = "", // Se asignará automáticamente en el ViewModel
-                            title = title,
-                            description = description,
-                            category = selectedCategory!!,
-                            priority = selectedPriority,
-                            status = TaskStatus.PENDING,
-                            dueDate = selectedDate,
-                            xpReward = when(selectedPriority) {
-                                TaskPriority.HIGH -> 60
-                                TaskPriority.MEDIUM -> 40  
-                                TaskPriority.LOW -> 20
-                            }
-                        )
-                        viewModel.addTask(newTask)
-                        onNavigateBack()
+                        // Safe access - ya verificamos que no es null
+                        selectedCategory?.let { category ->
+                            val newTask = Task(
+                                id = "", // Se asignará automáticamente en el ViewModel
+                                title = title,
+                                description = description,
+                                category = category,
+                                priority = selectedPriority,
+                                status = TaskStatus.PENDING,
+                                dueDate = selectedDate,
+                                xpReward = when(selectedPriority) {
+                                    TaskPriority.HIGH -> 60
+                                    TaskPriority.MEDIUM -> 40  
+                                    TaskPriority.LOW -> 20
+                                }
+                            )
+                            viewModel.addTask(newTask)
+                            onNavigateBack()
+                        }
                     }
                 },
                 modifier = Modifier.weight(1f),

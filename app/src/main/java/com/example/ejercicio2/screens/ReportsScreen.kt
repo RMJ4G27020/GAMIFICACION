@@ -34,6 +34,17 @@ fun ReportsScreen(
     val completedTasks = viewModel.getCompletedTasks()
     val pendingTasks = viewModel.getPendingTasks()
     
+    // Si el usuario no está cargado, mostrar indicador
+    if (userProfile == null) {
+        Box(
+            modifier = Modifier.fillMaxSize(),
+            contentAlignment = Alignment.Center
+        ) {
+            CircularProgressIndicator()
+        }
+        return
+    }
+    
     LazyColumn(
         modifier = Modifier
             .fillMaxSize()
@@ -143,7 +154,7 @@ private fun GeneralSummaryCard(
                 horizontalArrangement = Arrangement.SpaceEvenly
             ) {
                 SummaryItem(
-                    icon = Icons.Default.TrendingUp,
+                    icon = Icons.AutoMirrored.Filled.TrendingUp,
                     value = "Nivel $level",
                     label = "Actual",
                     color = Color.White

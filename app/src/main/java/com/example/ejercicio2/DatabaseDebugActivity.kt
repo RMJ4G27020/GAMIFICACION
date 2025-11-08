@@ -168,7 +168,7 @@ class DatabaseDebugActivity : ComponentActivity() {
                     value = if (dbExists) "SÍ ✅" else "NO ❌"
                 )
                 
-                Divider()
+                HorizontalDivider()
                 
                 // Estadísticas
                 Text(
@@ -210,7 +210,7 @@ class DatabaseDebugActivity : ComponentActivity() {
                     )
                 }
                 
-                Divider()
+                HorizontalDivider()
                 
                 // Instrucciones
                 Card(
