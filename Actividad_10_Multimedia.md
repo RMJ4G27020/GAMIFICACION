@@ -637,7 +637,7 @@ import android.view.animation.DecelerateInterpolator
 
 ## 👨‍💻 Información del Desarrollador
 
-**Nombre:** Ricardo Jiménez  
+**Nombre:** JOSE RICO
 **Repositorio:** [github.com/RMJ4G27020/GAMIFICACION](https://github.com/RMJ4G27020/GAMIFICACION)  
 **Fecha de entrega:** Noviembre 2025  
 **Versión:** 1.0
