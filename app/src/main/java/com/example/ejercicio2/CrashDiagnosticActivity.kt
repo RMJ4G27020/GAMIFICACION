@@ -12,7 +12,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.font.FontMonospace
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.ejercicio2.database.DatabaseHelper
@@ -83,7 +83,7 @@ class CrashDiagnosticActivity : ComponentActivity() {
                     Text(
                         diagnosticInfo,
                         modifier = Modifier.padding(12.dp),
-                        fontFamily = FontMonospace,
+                        fontFamily = FontFamily.Monospace,
                         fontSize = 10.sp,
                         lineHeight = 12.sp
                     )
