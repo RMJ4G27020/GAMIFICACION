@@ -21,7 +21,7 @@ class DatabaseHelper private constructor(context: Context) : SQLiteOpenHelper(
 
     companion object {
         const val DATABASE_NAME = "task_gamification.db"
-        const val DATABASE_VERSION = 1
+        const val DATABASE_VERSION = 2  // Incrementado para migración de autenticación
 
         @Volatile
         private var INSTANCE: DatabaseHelper? = null
@@ -132,9 +132,27 @@ class DatabaseHelper private constructor(context: Context) : SQLiteOpenHelper(
     }
 
     override fun onUpgrade(db: SQLiteDatabase, oldVersion: Int, newVersion: Int) {
+        android.util.Log.d("DatabaseHelper", "Migrando BD de versión $oldVersion a $newVersion")
+        
         when (oldVersion) {
             1 -> {
-                // Migraciones futuras aquí
+                if (newVersion >= 2) {
+                    // Migración v1 -> v2: Agregar campos de autenticación
+                    android.util.Log.d("DatabaseHelper", "Aplicando migración v1 -> v2: Autenticación")
+                    
+                    // Agregar columnas nuevas a la tabla users
+                    db.execSQL("ALTER TABLE users ADD COLUMN password_hash TEXT DEFAULT '' NOT NULL")
+                    db.execSQL("ALTER TABLE users ADD COLUMN remember_token TEXT")
+                    db.execSQL("ALTER TABLE users ADD COLUMN email_verified INTEGER DEFAULT 0 CHECK(email_verified IN (0, 1))")
+                    
+                    // Hacer email NOT NULL (actualizar primero los existentes)
+                    db.execSQL("UPDATE users SET email = 'usuario@ejemplo.com' WHERE email IS NULL OR email = ''")
+                    
+                    // Crear índice para remember_token
+                    db.execSQL("CREATE INDEX IF NOT EXISTS idx_users_remember_token ON users(remember_token)")
+                    
+                    android.util.Log.d("DatabaseHelper", "✅ Migración v1 -> v2 completada")
+                }
             }
         }
     }
@@ -220,7 +238,8 @@ class DatabaseHelper private constructor(context: Context) : SQLiteOpenHelper(
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 uuid TEXT NOT NULL UNIQUE,
                 name TEXT NOT NULL,
-                email TEXT UNIQUE,
+                email TEXT NOT NULL UNIQUE,
+                password_hash TEXT NOT NULL,
                 avatar_url TEXT,
                 current_xp INTEGER DEFAULT 0 CHECK(current_xp >= 0),
                 level INTEGER DEFAULT 1 CHECK(level >= 1),
@@ -232,12 +251,15 @@ class DatabaseHelper private constructor(context: Context) : SQLiteOpenHelper(
                 updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                 last_login TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                 preferences_json TEXT,
-                is_active INTEGER DEFAULT 1 CHECK(is_active IN (0, 1))
+                is_active INTEGER DEFAULT 1 CHECK(is_active IN (0, 1)),
+                remember_token TEXT,
+                email_verified INTEGER DEFAULT 0 CHECK(email_verified IN (0, 1))
             );
 
             CREATE INDEX IF NOT EXISTS idx_users_uuid ON users(uuid);
             CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);
             CREATE INDEX IF NOT EXISTS idx_users_level ON users(level);
+            CREATE INDEX IF NOT EXISTS idx_users_remember_token ON users(remember_token);
 
             -- Tabla: tasks
             CREATE TABLE IF NOT EXISTS tasks (

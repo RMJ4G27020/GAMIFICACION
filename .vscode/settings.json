@@ -3,7 +3,7 @@
     
     // Disable MSSQL extension for .sql files (this project uses SQLite, not MS SQL Server)
     "mssql.enableSqlAuthenticationProvider": false,
-    
+                                
     // Configure file associations - treat .sql files as SQLite
     "files.associations": {
         "*.sql": "sql"
@@ -40,5 +40,19 @@
     "[xml]": {
         "editor.tabSize": 4,
         "editor.insertSpaces": true
-    }
+    },
+    
+    // VSCode Animations settings - Enable smooth animations
+    "vscode-animations.Active": true,
+    "vscode-animations.Enabled": true,
+    "vscode-animations.Install-Method": "Custom CSS and JS Loader",
+    "vscode-animations.Custom-Css": "",
+    "vscode-animations.Tabs": "Slide",
+    "vscode-animations.Command-Palette": "Scale",
+    "vscode-animations.Smooth-Mode": true,
+    "vscode-animations.Scrolling": "Slide",
+    
+    // Disable the "unsupported" warning caused by Custom CSS extension
+    "window.titleBarStyle": "custom",
+    "extensions.ignoreRecommendations": true
 }

@@ -22,7 +22,9 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import com.example.ejercicio2.auth.AuthManager
 import com.example.ejercicio2.database.DatabaseInitializer
+import com.example.ejercicio2.models.User
 import com.example.ejercicio2.screens.*
 import com.example.ejercicio2.ui.theme.Ejercicio2Theme
 import com.example.ejercicio2.viewmodel.TaskManagerViewModel
@@ -33,8 +35,12 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         
         try {
-            // Inicializar base de datos
-            initializeDatabase()
+            // Inicializar base de datos CON datos de ejemplo
+            Log.d("MainActivity", "🔄 Inicializando BD...")
+            if (!DatabaseInitializer.initialize(this, createSampleData = true)) {
+                throw Exception("DatabaseInitializer retornó false")
+            }
+            Log.d("MainActivity", "✅ BD inicializada correctamente")
             
             setContent {
                 Ejercicio2Theme {
@@ -49,9 +55,14 @@ class MainActivity : ComponentActivity() {
         } catch (e: Exception) {
             Log.e("MainActivity", "❌ Error fatal en onCreate", e)
             e.printStackTrace()
-            // Si falla, intentar crear sin datos de ejemplo
+            
+            // Intentar reparación 1: Sin datos de ejemplo
             try {
-                DatabaseInitializer.initialize(this, createSampleData = false)
+                Log.d("MainActivity", "🔧 Intentando reparación 1: sin datos de ejemplo...")
+                if (!DatabaseInitializer.initialize(this, createSampleData = false)) {
+                    throw Exception("DatabaseInitializer retornó false (sin datos)")
+                }
+                
                 setContent {
                     Ejercicio2Theme {
                         Surface(
@@ -63,8 +74,18 @@ class MainActivity : ComponentActivity() {
                     }
                 }
             } catch (e2: Exception) {
-                Log.e("MainActivity", "❌ Error crítico irrecuperable", e2)
-                finish()
+                Log.e("MainActivity", "❌ Error en reparación 1", e2)
+                
+                // Intentar reparación 2: Abrir CrashDiagnosticActivity
+                try {
+                    Log.d("MainActivity", "🔧 Intentando reparación 2: abriendo diagnóstico...")
+                    val intent = Intent(this, CrashDiagnosticActivity::class.java)
+                    startActivity(intent)
+                    finish()
+                } catch (e3: Exception) {
+                    Log.e("MainActivity", "❌ Error crítico irrecuperable", e3)
+                    finish()
+                }
             }
         }
     }
@@ -72,6 +93,93 @@ class MainActivity : ComponentActivity() {
     @OptIn(ExperimentalMaterial3Api::class)
     @Composable
     fun MainApp() {
+        val context = LocalContext.current
+        val authManager = remember { AuthManager.getInstance(context) }
+        
+        // Estado de autenticación
+        var currentUser by remember { mutableStateOf<User?>(null) }
+        var isCheckingAuth by remember { mutableStateOf(true) }
+        
+        // Verificar si hay sesión activa al iniciar
+        LaunchedEffect(Unit) {
+            if (authManager.isLoggedIn()) {
+                currentUser = authManager.getCurrentUser()
+            }
+            isCheckingAuth = false
+        }
+        
+        // Si está verificando autenticación, mostrar splash
+        if (isCheckingAuth) {
+            Box(
+                modifier = Modifier.fillMaxSize(),
+                contentAlignment = androidx.compose.ui.Alignment.Center
+            ) {
+                CircularProgressIndicator()
+            }
+            return
+        }
+        
+        // Si no hay usuario, mostrar pantalla de autenticación
+        if (currentUser == null) {
+            AuthenticationFlow(
+                onLoginSuccess = { user ->
+                    currentUser = user
+                }
+            )
+        } else {
+            // Usuario autenticado, mostrar app principal
+            AuthenticatedApp(
+                currentUser = currentUser!!,
+                onLogout = {
+                    authManager.logout()
+                    currentUser = null
+                }
+            )
+        }
+    }
+    
+    /**
+     * Flujo de autenticación (Login y Registro)
+     */
+    @Composable
+    private fun AuthenticationFlow(
+        onLoginSuccess: (User) -> Unit
+    ) {
+        val navController = rememberNavController()
+        
+        NavHost(
+            navController = navController,
+            startDestination = "login"
+        ) {
+            composable("login") {
+                LoginScreen(
+                    onLoginSuccess = onLoginSuccess,
+                    onNavigateToRegister = {
+                        navController.navigate("register")
+                    }
+                )
+            }
+            
+            composable("register") {
+                RegisterScreen(
+                    onRegisterSuccess = onLoginSuccess,
+                    onNavigateBack = {
+                        navController.popBackStack()
+                    }
+                )
+            }
+        }
+    }
+    
+    /**
+     * App principal para usuarios autenticados
+     */
+    @OptIn(ExperimentalMaterial3Api::class)
+    @Composable
+    private fun AuthenticatedApp(
+        currentUser: User,
+        onLogout: () -> Unit
+    ) {
         val navController = rememberNavController()
         val context = LocalContext.current
         
@@ -165,6 +273,8 @@ class MainActivity : ComponentActivity() {
                 composable("profile") {
                     ProfileScreen(
                         viewModel = viewModel,
+                        currentUser = currentUser,
+                        onLogout = onLogout,
                         onNavigateBack = { navController.popBackStack() }
                     )
                 }

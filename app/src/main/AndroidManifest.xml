@@ -63,6 +63,13 @@
             </intent-filter>
         </activity>
 
+        <!-- Activity de diagnóstico para resolver crashes -->
+        <activity
+            android:name=".CrashDiagnosticActivity"
+            android:label="Diagnóstico de Crash"
+            android:exported="true">
+        </activity>
+
     </application>
 
 </manifest>

@@ -21,14 +21,18 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.ejercicio2.data.*
+import com.example.ejercicio2.models.User as AuthUser
 import com.example.ejercicio2.ui.theme.*
 import com.example.ejercicio2.viewmodel.TaskManagerViewModel
+import androidx.compose.material.icons.filled.ExitToApp
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ProfileScreen(
     viewModel: TaskManagerViewModel,
-    onNavigateBack: () -> Unit
+    currentUser: AuthUser,
+    onLogout: () -> Unit,
+    onNavigateBack: (() -> Unit)? = null
 ) {
     val userProfile = viewModel.userProfile
     
@@ -56,12 +60,14 @@ fun ProfileScreen(
                 modifier = Modifier.fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                IconButton(onClick = onNavigateBack) {
-                    Icon(
-                        Icons.AutoMirrored.Filled.ArrowBack,
-                        contentDescription = "Volver",
-                        tint = TextPrimary
-                    )
+                if (onNavigateBack != null) {
+                    IconButton(onClick = onNavigateBack) {
+                        Icon(
+                            Icons.AutoMirrored.Filled.ArrowBack,
+                            contentDescription = "Volver",
+                            tint = TextPrimary
+                        )
+                    }
                 }
                 
                 Text(
@@ -71,6 +77,91 @@ fun ProfileScreen(
                     color = TextPrimary,
                     modifier = Modifier.weight(1f)
                 )
+            }
+        }
+        
+        item {
+            // Información del usuario autenticado
+            Card(
+                modifier = Modifier
+                    .fillMaxWidth(),
+                colors = CardDefaults.cardColors(
+                    containerColor = Color.White
+                ),
+                elevation = CardDefaults.cardElevation(
+                    defaultElevation = 2.dp
+                ),
+                shape = RoundedCornerShape(16.dp)
+            ) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(20.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    // Avatar
+                    Box(
+                        modifier = Modifier
+                            .size(80.dp)
+                            .background(
+                                color = PrimaryBlueLight,
+                                shape = CircleShape
+                            ),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Person,
+                            contentDescription = "Avatar",
+                            tint = Color.White,
+                            modifier = Modifier.size(48.dp)
+                        )
+                    }
+                    
+                    Spacer(modifier = Modifier.height(16.dp))
+                    
+                    // Nombre
+                    Text(
+                        text = currentUser.name,
+                        fontSize = 24.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = TextPrimary
+                    )
+                    
+                    Spacer(modifier = Modifier.height(4.dp))
+                    
+                    // Email
+                    Text(
+                        text = currentUser.email,
+                        fontSize = 14.sp,
+                        color = TextSecondary
+                    )
+                    
+                    Spacer(modifier = Modifier.height(20.dp))
+                    
+                    // Botón de Logout
+                    Button(
+                        onClick = onLogout,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(50.dp),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = Color(0xFFEF5350)
+                        ),
+                        shape = RoundedCornerShape(12.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.ExitToApp,
+                            contentDescription = "Cerrar Sesión",
+                            modifier = Modifier.size(20.dp)
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            text = "Cerrar Sesión",
+                            fontSize = 16.sp,
+                            fontWeight = FontWeight.Medium
+                        )
+                    }
+                }
             }
         }
         
