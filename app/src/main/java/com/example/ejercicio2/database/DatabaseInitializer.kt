@@ -22,22 +22,39 @@ object DatabaseInitializer {
             val dbHelper = DatabaseHelper.getInstance(context)
             val db = dbHelper.writableDatabase
             
+            android.util.Log.d("DatabaseInitializer", "Iniciando verificación de BD...")
+            
             // Verificar que la base de datos se creó
             if (!db.isOpen) {
+                android.util.Log.e("DatabaseInitializer", "BD no está abierta")
                 return false
             }
             
+            android.util.Log.d("DatabaseInitializer", "BD abierta correctamente")
+            
             // Crear usuario por defecto si no existe
             val userExists = checkUserExists(context)
+            android.util.Log.d("DatabaseInitializer", "Usuario existe: $userExists")
+            
             if (!userExists) {
+                android.util.Log.d("DatabaseInitializer", "Creando usuario por defecto...")
                 createDefaultUser(context)
+                android.util.Log.d("DatabaseInitializer", "Usuario creado exitosamente")
             }
             
-            // Crear datos de ejemplo si se solicita
+            // Crear datos de ejemplo si se solicita (pero no fallar si falla esto)
             if (createSampleData && !userExists) {
-                createSampleTasks(context)
+                try {
+                    android.util.Log.d("DatabaseInitializer", "Creando datos de ejemplo...")
+                    createSampleTasks(context)
+                    android.util.Log.d("DatabaseInitializer", "Datos de ejemplo creados")
+                } catch (e: Exception) {
+                    android.util.Log.e("DatabaseInitializer", "Error creando datos de ejemplo (no crítico)", e)
+                    // No fallar por esto
+                }
             }
             
+            android.util.Log.d("DatabaseInitializer", "Inicialización completada exitosamente")
             true
         } catch (e: Exception) {
             android.util.Log.e("DatabaseInitializer", "Error al inicializar BD", e)

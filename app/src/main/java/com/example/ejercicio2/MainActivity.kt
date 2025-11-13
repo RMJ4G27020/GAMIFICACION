@@ -7,14 +7,19 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.animation.*
 import androidx.compose.animation.core.*
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Assignment
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.dp
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -34,32 +39,67 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         
+        Log.d("MainActivity", "🚀 ========== INICIANDO MAINACTIVITY ==========")
+        
         try {
-            // Inicializar base de datos CON datos de ejemplo
-            Log.d("MainActivity", "🔄 Inicializando BD...")
-            if (!DatabaseInitializer.initialize(this, createSampleData = true)) {
-                throw Exception("DatabaseInitializer retornó false")
-            }
-            Log.d("MainActivity", "✅ BD inicializada correctamente")
+            // Inicializar base de datos SIN datos de ejemplo (más estable)
+            Log.d("MainActivity", "🔄 Paso 1: Inicializando BD...")
+            val dbInitialized = DatabaseInitializer.initialize(this, createSampleData = false)
+            Log.d("MainActivity", "   Resultado BD: $dbInitialized")
             
+            if (!dbInitialized) {
+                Log.e("MainActivity", "⚠️ DatabaseInitializer retornó false, pero continuamos...")
+            } else {
+                Log.d("MainActivity", "✅ Paso 1: BD inicializada correctamente")
+            }
+            
+            Log.d("MainActivity", "🔄 Paso 2: Creando UI con setContent...")
             setContent {
                 Ejercicio2Theme {
                     Surface(
                         modifier = Modifier.fillMaxSize(),
                         color = MaterialTheme.colorScheme.background
                     ) {
+                        Log.d("MainActivity", "🔄 Paso 3: Entrando en MainApp composable...")
                         MainApp()
                     }
                 }
             }
+            Log.d("MainActivity", "✅ Paso 2: UI creada exitosamente")
+            
         } catch (e: Exception) {
-            Log.e("MainActivity", "❌ Error fatal en onCreate", e)
+            Log.e("MainActivity", "❌ ERROR en onCreate", e)
+            Log.e("MainActivity", "   Tipo: ${e.javaClass.simpleName}")
+            Log.e("MainActivity", "   Mensaje: ${e.message}")
             e.printStackTrace()
             
-            // Intentar reparación 1: Sin datos de ejemplo
+            // Intentar continuar de todas formas
             try {
-                Log.d("MainActivity", "🔧 Intentando reparación 1: sin datos de ejemplo...")
-                if (!DatabaseInitializer.initialize(this, createSampleData = false)) {
+                Log.d("MainActivity", "🔧 Intentando continuar sin reinicializar BD...")
+                
+                setContent {
+                    Ejercicio2Theme {
+                        Surface(
+                            modifier = Modifier.fillMaxSize(),
+                            color = MaterialTheme.colorScheme.background
+                        ) {
+                            MainApp()
+                        }
+                    }
+                }
+                Log.d("MainActivity", "✅ UI creada en modo recuperación")
+                return // Salir exitosamente
+            } catch (e2: Exception) {
+                Log.e("MainActivity", "❌ Fallo en modo recuperación", e2)
+            }
+            
+            // Si todo falla, ir a diagnóstico
+            try {
+                Log.d("MainActivity", "🔧 REPARACIÓN: Abriendo diagnóstico...")
+                val dbInitialized = DatabaseInitializer.initialize(this, createSampleData = false)
+                Log.d("MainActivity", "   Resultado BD sin datos: $dbInitialized")
+                
+                if (!dbInitialized) {
                     throw Exception("DatabaseInitializer retornó false (sin datos)")
                 }
                 
@@ -73,18 +113,70 @@ class MainActivity : ComponentActivity() {
                         }
                     }
                 }
+                Log.d("MainActivity", "✅ REPARACIÓN 1: Exitosa")
+                
             } catch (e2: Exception) {
-                Log.e("MainActivity", "❌ Error en reparación 1", e2)
+                Log.e("MainActivity", "❌ ERROR en reparación 1", e2)
                 
                 // Intentar reparación 2: Abrir CrashDiagnosticActivity
                 try {
-                    Log.d("MainActivity", "🔧 Intentando reparación 2: abriendo diagnóstico...")
+                    Log.d("MainActivity", "🔧 REPARACIÓN 2: Abriendo CrashDiagnosticActivity...")
                     val intent = Intent(this, CrashDiagnosticActivity::class.java)
+                    intent.putExtra("error_message", e.message ?: "Error desconocido")
+                    intent.putExtra("error_stacktrace", e.stackTraceToString())
                     startActivity(intent)
+                    Log.d("MainActivity", "✅ CrashDiagnosticActivity iniciado")
                     finish()
                 } catch (e3: Exception) {
-                    Log.e("MainActivity", "❌ Error crítico irrecuperable", e3)
-                    finish()
+                    Log.e("MainActivity", "❌ ERROR CRÍTICO IRRECUPERABLE", e3)
+                    Log.e("MainActivity", "   No se pudo abrir CrashDiagnosticActivity")
+                    
+                    // Último intento: Mostrar error en pantalla
+                    setContent {
+                        ErrorScreen(
+                            errorMessage = "Error crítico: ${e.message}\n\nRevisa Logcat para más detalles."
+                        )
+                    }
+                }
+            }
+        }
+    }
+    
+    @Composable
+    private fun ErrorScreen(errorMessage: String) {
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(Color(0xFFFF5252))
+                .padding(24.dp),
+            contentAlignment = Alignment.Center
+        ) {
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+                Text(
+                    "⚠️ Error Crítico",
+                    style = MaterialTheme.typography.headlineMedium,
+                    color = Color.White
+                )
+                Text(
+                    errorMessage,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = Color.White,
+                    textAlign = TextAlign.Center
+                )
+                Button(
+                    onClick = {
+                        // Reintentar
+                        recreate()
+                    },
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = Color.White,
+                        contentColor = Color(0xFFFF5252)
+                    )
+                ) {
+                    Text("🔄 Reintentar")
                 }
             }
         }
